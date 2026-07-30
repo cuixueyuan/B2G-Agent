@@ -1,0 +1,2 @@
+[console_scripts]
+x2g-building-to-grid = x2g_agent.cli:run_building_to_grid

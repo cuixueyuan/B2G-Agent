@@ -1,0 +1,14 @@
+Clear
+Set DefaultBaseFrequency=60
+
+New Circuit.X2GSample basekv=12.47 pu=1.0 phases=3 bus1=sourcebus
+New Vsource.Source phases=3 bus1=sourcebus basekv=12.47 pu=1.0 angle=0 frequency=60
+
+New Linecode.Radial nphases=3 r1=0.35 x1=0.35 r0=0.7 x0=1.0 units=km
+New Line.Main phases=3 bus1=sourcebus bus2=loadbus linecode=Radial length=1.0 units=km
+
+New Load.building_load phases=3 bus1=loadbus kv=12.47 kw=1 kvar=0 model=1 conn=wye
+
+Set VoltageBases=[12.47]
+CalcVoltageBases
+Solve

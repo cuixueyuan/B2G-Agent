@@ -1,0 +1,30 @@
+case:
+  name: Building-to-Grid
+  mode: mock
+
+paths:
+  data_root: "../data_sample"
+  output_root: "../outputs/building_to_grid"
+
+energyplus:
+  executable: "${ENERGYPLUS_EXE}"
+  idf_path: "${ENERGYPLUS_IDF}"
+  epw_path: "${ENERGYPLUS_EPW}"
+  timestep_per_hour: 1
+
+building:
+  building_id: "single_building_001"
+  bus_id: "bus_4"
+  load_scale: 1.0
+  power_factor: 0.95
+
+opendss:
+  backend: "opendssdirect"
+  feeder_template: "../data_sample/opendss/simple_radial_feeder.dss"
+  target_bus: "bus_4"
+  base_kv: 12.47
+
+thresholds:
+  voltage_min_pu: 0.95
+  voltage_max_pu: 1.05
+  line_loading_limit_pct: 100

@@ -1,0 +1,19 @@
+Clear
+Set DefaultBaseFrequency=60
+
+! Four-bus 12.47 kV radial feeder for X2G-Agent Building-to-Grid studies.
+New Circuit.X2GSimpleRadial phases=3 bus1=bus_1 basekv=12.47 pu=1.0 angle=0 frequency=60
+Edit Vsource.Source phases=3 bus1=bus_1 basekv=12.47 pu=1.0 angle=0 frequency=60
+
+New Linecode.Radial_336 nphases=3 r1=0.306 x1=0.627 r0=0.592 x0=1.864 c1=3.4 c0=1.6 units=km
+
+New Line.Line_1 phases=3 bus1=bus_1 bus2=bus_2 linecode=Radial_336 length=0.40 units=km
+New Line.Line_2 phases=3 bus1=bus_2 bus2=bus_3 linecode=Radial_336 length=0.35 units=km
+New Line.Line_3 phases=3 bus1=bus_3 bus2=bus_4 linecode=Radial_336 length=0.25 units=km
+
+New Load.building_load phases=3 bus1=bus_4 conn=wye model=1 kv=12.47 kw=1 kvar=0
+
+Set VoltageBases=[12.47]
+CalcVoltageBases
+Set Mode=Snap
+Solve
