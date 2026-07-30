@@ -1,0 +1,26 @@
+case_name: building-cluster-to-grid
+n_buildings: 50
+simulation_hours: 24
+time_step_minutes: 60
+default_backend: synthetic
+weather:
+  mode: placeholder
+  epw_path: null
+resstock:
+  enabled: false
+  resstock_repo_path: null
+  buildstockbatch_project_yaml: null
+grid:
+  model_type: reuse_existing_or_synthetic_radial
+  nominal_voltage_kv: 12.47
+  buses:
+    - bus_3
+    - bus_4
+    - bus_5
+    - bus_6
+    - bus_7
+    - bus_8
+outputs:
+  building_loads: outputs/building_loads/building_loads.csv
+  bus_loads: outputs/bus_loads/bus_loads.csv
+  grid_results: outputs/grid_results/grid_results.csv

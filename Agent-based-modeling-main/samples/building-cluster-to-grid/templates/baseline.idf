@@ -1,0 +1,15 @@
+!- Minimal placeholder IDF for the Building-Cluster-to-Grid sample.
+!- The synthetic backend does not execute EnergyPlus.
+!- The resstock backend scaffold will use real stock-model inputs in a future implementation.
+
+Version,9.6;
+
+Building,
+  X2G_Residential_Prototype,
+  0.0,
+  Suburbs,
+  0.04,
+  0.4,
+  FullExterior,
+  25,
+  6;

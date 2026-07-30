@@ -1,0 +1,50 @@
+Metadata-Version: 2.4
+Name: x2g-agent
+Version: 0.1.0
+Summary: Agentic workflows for coordinating end-use energy simulation and power-grid simulation.
+Author: X2G-Agent contributors
+License: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: opendssdirect.py>=0.9
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+
+# X2G-Agent
+
+X2G-Agent is an agentic workflow library for coordinating end-use energy simulation and power-grid simulation.
+
+The first implemented case study is **Building-to-Grid**: a single-building EnergyPlus load profile is standardized, mapped to an OpenDSS bus, injected into a simple radial feeder, evaluated, and reported.
+
+## Quick Start
+
+```powershell
+python -m pip install -e ".[dev]"
+python scripts/run_building_to_grid.py --config configs/building_to_grid.yaml
+pytest
+```
+
+The default configuration runs in mock mode, so it does not require EnergyPlus or OpenDSS to be installed. Outputs are written under `outputs/building_to_grid/`.
+
+## External Simulators
+
+EnergyPlus executable, IDF, and EPW paths are read from `configs/building_to_grid.yaml` or from `.env` variables:
+
+```text
+ENERGYPLUS_EXE=C:\EnergyPlusV24-1-0\energyplus.exe
+ENERGYPLUS_IDF=D:\models\building.idf
+ENERGYPLUS_EPW=D:\weather\site.epw
+```
+
+OpenDSSDirect.py is used by `x2g_agent.tools.opendss` when `opendss.mode` is set to `direct`.
+
+## Package Layout
+
+- `src/x2g_agent/agents/`: workflow agents
+- `src/x2g_agent/tools/`: wrappers for external simulator calls
+- `configs/building_to_grid.yaml`: runnable case-study config
+- `data_sample/opendss/`: simple sample radial feeder
+- `docs/cases/building_to_grid.md`: case-study documentation
+- `tests/`: pytest coverage for mock mode
