@@ -130,13 +130,15 @@ class B2GMediator:
         return response_model.model_validate_json(content)
 
     def _build_client(self) -> Any | None:
-        if not self.enabled or not os.getenv("OPENAI_API_KEY"):
+        api_key = os.getenv("OPENAI_API_KEY", "").strip()
+        placeholder_prefixes = ("your_", "replace_", "example_", "<")
+        if not self.enabled or not api_key or api_key.lower().startswith(placeholder_prefixes):
             return None
         try:
             from openai import OpenAI
         except ImportError:
             return None
-        return OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        return OpenAI(api_key=api_key)
 
 
 def _planning_prompt(user_role: EngineerRole, counterpart_role: EngineerRole) -> str:

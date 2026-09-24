@@ -34,39 +34,54 @@ The current scenario exposes eight validated decisions: cooling setpoint, buildi
 
 > **Evidence boundary:** the vertical slice currently uses a transparent deterministic residential-load and radial-feeder backend. It demonstrates the complete mediation, tool-planning, evidence, and decision workflow, but it is not a calibrated EnergyPlus/OpenDSS engineering study. EnergyPlus-MCP and PowerMCP are the next validated backend integrations; the legacy single-building workflow already supports direct EnergyPlus and OpenDSS execution.
 
+## Interface Preview
+
+The complete local experience has four stages. These screenshots were captured from the offline fallback mode, so no API key is required to reproduce them.
+
+| 1. Choose an engineering role | 2. Review the project brief |
+|---|---|
+| ![Choose between Building Engineer and Distribution Power Engineer](docs/assets/screenshots/01-role-selection.png) | ![Review the Harborview project brief, counterpart, and simulation boundary](docs/assets/screenshots/02-project-brief.png) |
+
+| 3. Enter the co-design room | 4. Review the joint plan |
+|---|---|
+| ![Three-way co-design room with shared evidence and case state](docs/assets/screenshots/03-codesign-room.png) | ![Final decision package, constraint checks, and downloadable report](docs/assets/screenshots/04-final-review.png) |
+
 ## Quick Start
 
-Python 3.11 or newer is required.
+Python 3.11 or newer and Git are required. EnergyPlus, OpenDSS, Node.js, and an API key are **not** required for the four-stage offline demo.
+
+### Windows PowerShell
+
+```powershell
+git clone https://github.com/cuixueyuan/B2G-Agent.git
+Set-Location B2G-Agent
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+Copy-Item .env.example .env
+b2g-web
+```
+
+### macOS or Linux
 
 ```bash
 git clone https://github.com/cuixueyuan/B2G-Agent.git
 cd B2G-Agent
-python -m venv .venv
-```
-
-Activate the environment:
-
-```bash
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-
-# macOS / Linux
+python3 -m venv .venv
 source .venv/bin/activate
-```
-
-Install and start the web application:
-
-```bash
 python -m pip install -e ".[dev]"
-copy .env.example .env  # Windows; use `cp` on macOS/Linux
+cp .env.example .env
 b2g-web
 ```
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). Stop the local service with `Ctrl+C`.
 
-### Configure your own LLM API key
+The copied `.env` starts with `B2G_LLM_ENABLED=false`, so the complete interface and deterministic scenario run locally without contacting an LLM provider.
 
-Edit the local `.env` file:
+### Enable the LLM mediator with your own API key
+
+Stop the service, edit the local `.env`, and replace the values below:
 
 ```dotenv
 OPENAI_API_KEY=your_own_api_key_here
@@ -74,7 +89,9 @@ B2G_MODEL=gpt-4.1-mini
 B2G_LLM_ENABLED=true
 ```
 
-The real `.env` file is ignored by Git and must never be committed. The key is loaded only by the Python server; it is never returned by an API endpoint or sent to the browser. If no key is configured, B2G-Agent uses a limited deterministic fallback so the interface and simulations remain testable.
+Restart `b2g-web` after saving the file. The real `.env` is ignored by Git and must never be committed. The key is loaded only by the Python server; it is never returned by an API endpoint or sent to the browser.
+
+For environment verification, alternative launch commands, tests, common Windows issues, and troubleshooting, see the [complete local deployment guide](docs/local-deployment.md).
 
 ## Interaction Model
 
