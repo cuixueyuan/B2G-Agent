@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from x2g_agent.chat.config_builder import ConfigBuilder
-from x2g_agent.config import _load_yaml
+from b2g_agent.chat.config_builder import ConfigBuilder
+from b2g_agent.config import _load_yaml
 
 
 def test_config_builder_writes_chat_config(tmp_path: Path) -> None:

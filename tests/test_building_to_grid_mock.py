@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from x2g_agent.workflow import run_building_to_grid_workflow
+from b2g_agent.workflow import run_building_to_grid_workflow
 
 
 def test_mock_building_to_grid_workflow(tmp_path: Path) -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from x2g_agent.chat.intent_parser import IntentParser
+from b2g_agent.chat.intent_parser import IntentParser
 
 
 def test_parse_run_modes() -> None:

@@ -1,64 +1,197 @@
-# Agent-based cross-domain simulation
+# B2G-Agent
 
-Here we provide a cross-domain simulation workflow agent for coordinating end-use energy simulation with power-grid simulation. It provides a lightweight Python workflow layer that standardizes load profiles, maps end-use demand into grid models, runs or mocks external simulators, evaluates grid risk, and writes reproducible artifacts.
+**A simulation-grounded AI mediator for building–grid co-design.**
 
-The repository now keeps runnable and planned workflows under `samples/`, while reusable source code remains under `src/x2g_agent/`.
+B2G-Agent helps building engineers and distribution power engineers collaborate without requiring either person to master the other discipline's terminology or simulation software. It interprets free-form professional input, translates it into a shared engineering case, decides when evidence is needed, runs a validated scenario backend, explains the consequences to both sides, and records the path to a joint plan.
 
-## Available Samples
+![B2G-Agent concept: an AI mediator connecting building and power engineers to EnergyPlus and OpenDSS](docs/assets/b2g-agent-concept.png)
 
-- `samples/single-building-to-grid`: a runnable Building-to-Grid workflow that couples one building load profile with an OpenDSS feeder.
-- `samples/building-cluster-to-grid`: a scaffold for cluster-scale building-stock workflows and future ResStock/BuildStockBatch integration.
+## Why B2G-Agent
 
-## Run The Single-Building Sample
+### 1. Cross-domain professional mediation
 
-The default single-building config runs in mock mode, so it does not require EnergyPlus or OpenDSS.
+B2G-Agent performs three kinds of translation:
+
+- **Language translation:** explains each discipline's terminology in the other engineer's decision context.
+- **Model translation:** maps natural language to validated building and grid parameters.
+- **Impact translation:** converts simulation evidence into consequences the counterpart can act on.
+
+### 2. Natural-language simulation delegation
+
+Engineers state goals, constraints, preferences, and proposed changes. The LLM interprets the message and proposes a structured action plan; typed schemas validate the plan; deterministic code applies allowed changes; the simulation backend computes the evidence; and the LLM explains the result. The LLM never fabricates engineering metrics.
+
+## Current Vertical Slice
+
+The runnable web application implements the **Harborview Residential Renewal** scenario:
+
+1. Choose to participate as a Building Engineer or Distribution Power Engineer.
+2. Review a constrained 80-home expansion and retrofit brief.
+3. Negotiate with an AI counterpart inside a three-way co-design room.
+4. Compare building comfort, grid reliability, voltage, equipment loading, and indicative cost.
+5. Produce a traceable final-plan Markdown report for human review.
+
+The current scenario exposes eight validated decisions: cooling setpoint, building count, retrofit level, rooftop PV, demand response, connection bus, transformer capacity, and line capacity.
+
+> **Evidence boundary:** the vertical slice currently uses a transparent deterministic residential-load and radial-feeder backend. It demonstrates the complete mediation, tool-planning, evidence, and decision workflow, but it is not a calibrated EnergyPlus/OpenDSS engineering study. EnergyPlus-MCP and PowerMCP are the next validated backend integrations; the legacy single-building workflow already supports direct EnergyPlus and OpenDSS execution.
+
+## Quick Start
+
+Python 3.11 or newer is required.
 
 ```bash
-python samples/single-building-to-grid/scripts/run_building_to_grid.py --config samples/single-building-to-grid/configs/building_to_grid.yaml
+git clone https://github.com/cuixueyuan/B2G-Agent.git
+cd B2G-Agent
+python -m venv .venv
 ```
 
-You can also run it from the sample directory:
+Activate the environment:
 
 ```bash
-cd samples/single-building-to-grid
-python scripts/run_building_to_grid.py --config configs/building_to_grid.yaml
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# macOS / Linux
+source .venv/bin/activate
 ```
 
-Outputs are written under `samples/single-building-to-grid/outputs/building_to_grid/`.
-
-## Run The Building-Cluster Sample
-
-The cluster sample defaults to a synthetic backend that requires no ResStock or BuildStockBatch installation:
-
-```bash
-python samples/building-cluster-to-grid/src/run_case.py --backend synthetic
-```
-
-The `resstock` backend is scaffold-only and reports missing ResStock/BuildStockBatch dependencies clearly.
-
-## Dependency Status
-
-EnergyPlus is required for the existing real building simulation path in `samples/single-building-to-grid`. Mock mode remains available for tests and local smoke runs without EnergyPlus or OpenDSS execution.
-
-ResStock and BuildStockBatch support is planned and scaffolded in `samples/building-cluster-to-grid`, but it is not implemented as an executable stock-simulation workflow yet.
-
-## Development
-
-Install the package in editable mode:
+Install and start the web application:
 
 ```bash
 python -m pip install -e ".[dev]"
+copy .env.example .env  # Windows; use `cp` on macOS/Linux
+b2g-web
 ```
 
-Run the full test suite:
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+### Configure your own LLM API key
+
+Edit the local `.env` file:
+
+```dotenv
+OPENAI_API_KEY=your_own_api_key_here
+B2G_MODEL=gpt-4.1-mini
+B2G_LLM_ENABLED=true
+```
+
+The real `.env` file is ignored by Git and must never be committed. The key is loaded only by the Python server; it is never returned by an API endpoint or sent to the browser. If no key is configured, B2G-Agent uses a limited deterministic fallback so the interface and simulations remain testable.
+
+## Interaction Model
+
+```text
+Free-form engineer message
+        ↓
+Role-aware LLM interpretation
+        ↓
+Validated parameter/action schema ──→ clarify or request confirmation
+        ↓
+Building / grid / coupled simulation decision
+        ↓
+Deterministic execution and constraint verification
+        ↓
+Audience-specific translation + AI counterpart response
+        ↓
+Decision ledger → scenario comparison → final human review
+```
+
+The three speakers are deliberately separate:
+
+- **Human engineer:** owns professional intent and final approval.
+- **AI counterpart:** represents the other discipline's scenario-defined objectives and constraints.
+- **B2G-Agent mediator:** interprets, translates, runs evidence, manages the discussion, and records decisions.
+
+## Architecture
+
+```text
+Browser UI
+  └─ FastAPI session service
+      ├─ Conversation governor and confirmation policy
+      ├─ LLM mediator (structured JSON only)
+      ├─ Shared B2G case state
+      ├─ ResidentialCommunitySimulator (current vertical backend)
+      ├─ EnergyPlus / OpenDSS legacy adapters
+      ├─ EnergyPlus-MCP / PowerMCP extension boundary
+      └─ Session artifacts and final decision report
+```
+
+See [architecture.md](docs/architecture.md), [vertical-scenario.md](docs/vertical-scenario.md), [capability-matrix.md](docs/capability-matrix.md), and [security.md](docs/security.md).
+
+## API Endpoints
+
+- `GET /api/health` — local service status.
+- `GET /api/scenario` — scenario brief and allowed decision space.
+- `POST /api/sessions` — create a role-aware session.
+- `POST /api/sessions/{id}/messages` — mediate one free-form turn.
+- `POST /api/sessions/{id}/simulate` — rerun the current shared case.
+- `POST /api/sessions/{id}/finalize` — select and report the best available candidate.
+
+Interactive API documentation is available at `/docs` while the service is running.
+
+## Existing Simulation Workflows
+
+The earlier deterministic workflow remains available:
+
+```bash
+python samples/single-building-to-grid/scripts/run_building_to_grid.py \
+  --config samples/single-building-to-grid/configs/building_to_grid.yaml
+```
+
+The archived samples include:
+
+- `samples/single-building-to-grid`: mock or real EnergyPlus-to-OpenDSS coupling.
+- `samples/building-cluster-to-grid`: deterministic 50-building synthetic cluster; the ResStock backend remains scaffold-only.
+
+## Testing
 
 ```bash
 pytest
 ```
 
-Current definition of done:
+Unit tests never require a real API key, EnergyPlus, or OpenDSS execution. They cover the existing coupling workflow, EnergyPlus parsing, OpenDSS behavior, LLM action validation, the new residential vertical simulator, collaboration sessions, and the web API.
 
-```bash
-python samples/single-building-to-grid/scripts/run_building_to_grid.py --config samples/single-building-to-grid/configs/building_to_grid.yaml
-pytest
+## Repository Layout
+
+```text
+src/b2g_agent/
+  collaboration/       # roles, shared state, mediator, scenario, and session logic
+  web/                 # FastAPI app and four-stage browser interface
+  agents/              # existing deterministic workflow agents
+  tools/               # EnergyPlus/OpenDSS wrappers and data utilities
+  cases/               # reusable workflow orchestration
+samples/               # archived single-building and cluster examples
+docs/                  # architecture, scenario, capability, and security documentation
+tests/                 # unit and API tests
 ```
+
+## External Ecosystem
+
+B2G-Agent is designed to orchestrate, not duplicate, the domain tool ecosystems:
+
+- [PowerMCP](https://github.com/Power-Agent/PowerMCP), maintained by the Harvard Power and AI Initiative, provides MCP servers for OpenDSS and other power-system tools.
+- [EnergyPlus-MCP](https://github.com/LBNL-ETA/EnergyPlus-MCP), developed by Lawrence Berkeley National Laboratory, provides MCP tools for EnergyPlus model inspection, modification, execution, and analysis.
+
+Those projects retain their own licenses and attribution. They are not vendored into this repository.
+
+## Roadmap
+
+- Validate thermostat and schedule modification through EnergyPlus-MCP.
+- Connect PowerMCP/OpenDSS for feeder compilation, scenario edits, and QSTS analysis.
+- Add a capability registry that selects MCP tools only when required actions are supported.
+- Add a real two-human collaboration mode alongside the current human-plus-NPC mode.
+- Add scenario comparison, sensitivity analysis, and multi-objective trade-off views.
+- Evaluate communication accuracy, tool-selection accuracy, time to feasible agreement, reproducibility, and professional trust.
+
+## Citation
+
+```bibtex
+@software{b2g_agent,
+  title  = {B2G-Agent: A Simulation-Grounded AI Mediator for Building--Grid Co-Design},
+  author = {Xueyuan Cui},
+  year   = {2026},
+  url    = {https://github.com/cuixueyuan/B2G-Agent}
+}
+```
+
+## License
+
+Released under the MIT License. External simulators and MCP servers are governed by their respective licenses.

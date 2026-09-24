@@ -18,11 +18,11 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from x2g_agent.chat import ChatAgent
+from b2g_agent.chat import ChatAgent
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Chat with X2G-Agent about the Building-to-Grid case.")
+    parser = argparse.ArgumentParser(description="Chat with B2G-Agent about the Building-to-Grid case.")
     parser.add_argument("--config", default="configs/building_to_grid.yaml", help="Base YAML config.")
     parser.add_argument("--session-root", default="outputs/chat_sessions", help="Directory for chat session outputs.")
     parser.add_argument("--backend", choices=["rule", "openai"], default="rule", help="Intent parser backend.")
@@ -37,7 +37,7 @@ def main() -> int:
         session_root = session_root if session_root.exists() else SAMPLE_ROOT / session_root
 
     agent = ChatAgent(config_path, session_root=session_root, backend=args.backend, debug=args.debug)
-    print(f"X2G-Agent Building-to-Grid chat ({args.backend} backend). Try: run mock Building-to-Grid")
+    print(f"B2G-Agent Building-to-Grid chat ({args.backend} backend). Try: run mock Building-to-Grid")
     while True:
         try:
             user_text = input("> ")

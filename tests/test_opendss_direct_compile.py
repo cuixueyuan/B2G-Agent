@@ -4,7 +4,7 @@ import sys
 import types
 from pathlib import Path
 
-from x2g_agent.tools.opendss_tool import run_opendssdirect_detailed
+from b2g_agent.tools.opendss_tool import run_opendssdirect_detailed
 
 
 class _FakeDSS:

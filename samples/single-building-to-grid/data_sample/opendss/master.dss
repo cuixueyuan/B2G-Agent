@@ -1,7 +1,7 @@
 Clear
 Set DefaultBaseFrequency=60
 
-New Circuit.X2GSample basekv=12.47 pu=1.0 phases=3 bus1=sourcebus
+New Circuit.B2GSample basekv=12.47 pu=1.0 phases=3 bus1=sourcebus
 New Vsource.Source phases=3 bus1=sourcebus basekv=12.47 pu=1.0 angle=0 frequency=60
 
 New Linecode.Radial nphases=3 r1=0.35 x1=0.35 r0=0.7 x0=1.0 units=km

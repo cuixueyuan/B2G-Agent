@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from x2g_agent.tools.energyplus_tool import parse_eplusout_mtr, run_energyplus_or_mock
+from b2g_agent.tools.energyplus_tool import parse_eplusout_mtr, run_energyplus_or_mock
 
 
 def test_real_mode_expands_env_and_parses_hourly_electricity(monkeypatch, tmp_path: Path) -> None:
@@ -61,7 +61,7 @@ def test_real_mode_reruns_with_temporary_idf_when_hourly_meter_missing(monkeypat
         if len(calls) == 1:
             (output_dir / "eplusout.csv").write_text("Date/Time,Other Meter [J](Hourly)\n1,2\n", encoding="utf-8")
         else:
-            assert command[-1].endswith("_x2g_hourly_meter.idf")
+            assert command[-1].endswith("_b2g_hourly_meter.idf")
             assert "Output:Meter,Electricity:Facility,hourly;" in Path(command[-1]).read_text(encoding="utf-8")
             (output_dir / "eplusout.csv").write_text(
                 "Date/Time,Electricity:Facility [J](Hourly)\n"

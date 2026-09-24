@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This sample extends the single-building workflow to a 50-building residential cluster. It demonstrates how X2G-Agent can coordinate building-stock energy simulation outputs with distribution-grid simulation.
+This sample extends the single-building workflow to a 50-building residential cluster. It demonstrates how B2G-Agent can coordinate building-stock energy simulation outputs with distribution-grid simulation.
 
 ## Current Implementation
 

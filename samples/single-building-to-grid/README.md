@@ -1,20 +1,20 @@
 # Single-Building To Grid
 
-This archived sample contains the original X2G-Agent single-building Building-to-Grid case. Commands in this README assume the current directory is `samples/single-building-to-grid`.
+This archived sample contains the original B2G-Agent single-building Building-to-Grid case. Commands in this README assume the current directory is `samples/single-building-to-grid`.
 
-X2G-Agent is an agentic workflow library for coordinating end-use energy simulation and power-grid simulation.
+B2G-Agent is an agentic workflow library for coordinating end-use energy simulation and power-grid simulation.
 
 The first case study is **Building-to-Grid**: a workflow that connects a single-building EnergyPlus simulation, or a mock building load profile, to an OpenDSS distribution power-flow analysis.
 
 ## Motivation
 
-Buildings, vehicles, industrial loads, and data centers increasingly shape distribution-grid operating conditions. Energy models and grid models often live in separate tools, with manual file conversion between them. X2G-Agent provides a lightweight, testable workflow layer for coordinating these tools, standardizing load profiles, injecting them into feeders, evaluating grid risk, and producing reproducible reports.
+Buildings increasingly shape distribution-grid operating conditions. Energy models and grid models often live in separate tools, with manual file conversion between them. B2G-Agent provides a lightweight, testable workflow layer for coordinating these tools, standardizing load profiles, injecting them into feeders, evaluating grid risk, and producing reproducible reports.
 
 The project starts small by making one building-to-grid loop work end to end, then grows toward broader end-use-to-grid workflows.
 
 ## Architecture
 
-X2G-Agent uses simple stateful agents. Each agent receives a workflow `state`, adds data or artifacts, and returns the updated state.
+B2G-Agent uses simple stateful agents. Each agent receives a workflow `state`, adds data or artifacts, and returns the updated state.
 
 ```text
 EnergyPlusAgent
@@ -24,7 +24,7 @@ EnergyPlusAgent
   -> ReportAgent
 ```
 
-External simulator calls are wrapped under `src/x2g_agent/tools/`:
+External simulator calls are wrapped under `src/b2g_agent/tools/`:
 
 - `energyplus_tool.py` runs EnergyPlus or mock building-load generation.
 - `opendss_tool.py` runs OpenDSSDirect.py or mock power-flow analysis.
@@ -48,8 +48,8 @@ The first workflow performs these steps:
 Create and activate a Python 3.11+ environment:
 
 ```bash
-conda create -n x2g-agent python=3.11 -y
-conda activate x2g-agent
+conda create -n b2g-agent python=3.11 -y
+conda activate b2g-agent
 ```
 
 Install the package in editable mode:
@@ -82,7 +82,7 @@ pytest
 
 ## Conversational Mode
 
-X2G-Agent includes a terminal chat interface for running the Building-to-Grid case from natural-language requests.
+B2G-Agent includes a terminal chat interface for running the Building-to-Grid case from natural-language requests.
 
 Architecture:
 
@@ -106,8 +106,8 @@ Required `.env` settings for OpenAI-backed mode:
 
 ```text
 OPENAI_API_KEY=your_openai_api_key_here
-X2G_CHAT_BACKEND=rule
-X2G_CHAT_MODEL=gpt-4.1-mini
+B2G_MODEL=gpt-4.1-mini
+B2G_LLM_ENABLED=true
 ```
 
 Example prompts:
@@ -194,7 +194,7 @@ scripts/
   run_building_to_grid.py
 outputs/
 ../../src/
-  x2g_agent/
+  b2g_agent/
 ```
 
 ## Limitations
@@ -218,8 +218,8 @@ outputs/
 Citation information will be added in a future release.
 
 ```bibtex
-@software{x2g_agent,
-  title = {X2G-Agent},
+@software{b2g_agent,
+  title = {B2G-Agent},
   author = {Xueyuan Cui},
   year = {2026},
   note = {Agentic workflows for end-use-to-grid simulation}

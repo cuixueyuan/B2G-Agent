@@ -6,7 +6,7 @@ This document belongs to the archived sample at `samples/single-building-to-grid
 
 How does an hourly building electricity demand profile affect distribution-feeder operating risk when it is injected at a specific grid bus?
 
-The first X2G-Agent case study answers this question for one building and one radial feeder. It is designed as a reproducible coupling pattern rather than a final planning model: run or mock a building simulation, map the resulting load to a feeder bus, solve hourly power flow, and summarize voltage, loading, convergence, and peak-demand impacts.
+The first B2G-Agent case study answers this question for one building and one radial feeder. It is designed as a reproducible coupling pattern rather than a final planning model: run or mock a building simulation, map the resulting load to a feeder bus, solve hourly power flow, and summarize voltage, loading, convergence, and peak-demand impacts.
 
 ## Software Coupling Logic
 
@@ -15,12 +15,12 @@ The coupling boundary is an hourly real-power load profile. EnergyPlus represent
 The workflow separates responsibilities:
 
 - EnergyPlus produces or informs building electricity demand.
-- X2G-Agent standardizes that output as a clean hourly CSV.
-- X2G-Agent maps the load to an OpenDSS bus and writes loadshape/input files.
+- B2G-Agent standardizes that output as a clean hourly CSV.
+- B2G-Agent maps the load to an OpenDSS bus and writes loadshape/input files.
 - OpenDSSDirect.py solves feeder power flow for each hourly load point.
-- X2G-Agent evaluates risk metrics and creates a report.
+- B2G-Agent evaluates risk metrics and creates a report.
 
-External simulator calls are wrapped under `src/x2g_agent/tools/` so agents can remain small and testable.
+External simulator calls are wrapped under `src/b2g_agent/tools/` so agents can remain small and testable.
 
 ## Agent Workflow
 
@@ -65,9 +65,9 @@ timestamp,target_bus,load_name,phases,kv,building_kw,building_kvar
 
 ## EnergyPlus Output Standardization
 
-In mock mode, X2G-Agent creates a deterministic hourly building load profile.
+In mock mode, B2G-Agent creates a deterministic hourly building load profile.
 
-In real mode, X2G-Agent runs EnergyPlus with:
+In real mode, B2G-Agent runs EnergyPlus with:
 
 ```bash
 energyplus -w <epw_path> -d <energyplus_output_dir> <idf_path>
@@ -145,11 +145,11 @@ risk_summary.csv
 Create the environment:
 
 ```bash
-conda create -n x2g-agent python=3.11 -y
-conda activate x2g-agent
+conda create -n b2g-agent python=3.11 -y
+conda activate b2g-agent
 ```
 
-Install X2G-Agent:
+Install B2G-Agent:
 
 ```bash
 python -m pip install -e ".[dev]"

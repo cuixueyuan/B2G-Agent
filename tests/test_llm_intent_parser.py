@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from x2g_agent.chat.intent_parser import Intent
-from x2g_agent.chat.llm_intent_parser import (
+from b2g_agent.chat.intent_parser import Intent
+from b2g_agent.chat.llm_intent_parser import (
     LLMIntentParser,
     LLMIntentValidationError,
     chat_action_to_intent,
@@ -118,7 +118,7 @@ def test_mocked_openai_client_validation_error_in_debug(capsys) -> None:
 
 
 def test_mocked_llm_parser_with_chat_agent(tmp_path, monkeypatch) -> None:
-    from x2g_agent.chat.chat_agent import ChatAgent
+    from b2g_agent.chat.chat_agent import ChatAgent
 
     class FakeParser:
         def parse(self, _text):
@@ -138,8 +138,8 @@ def test_mocked_llm_parser_with_chat_agent(tmp_path, monkeypatch) -> None:
 
 
 def test_chat_agent_executes_llm_action_sequence(tmp_path, monkeypatch) -> None:
-    from x2g_agent.chat import chat_agent as chat_agent_module
-    from x2g_agent.chat.chat_agent import ChatAgent
+    from b2g_agent.chat import chat_agent as chat_agent_module
+    from b2g_agent.chat.chat_agent import ChatAgent
 
     class FakeParser:
         def parse(self, _text):
@@ -176,7 +176,7 @@ def test_chat_agent_executes_llm_action_sequence(tmp_path, monkeypatch) -> None:
 
 
 def test_llm_validation_failure_does_not_execute(tmp_path) -> None:
-    from x2g_agent.chat.chat_agent import ChatAgent
+    from b2g_agent.chat.chat_agent import ChatAgent
 
     class BadParser:
         def parse(self, _text):
