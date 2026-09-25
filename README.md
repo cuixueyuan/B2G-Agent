@@ -6,6 +6,32 @@ B2G-Agent helps Building Engineers and Distribution Power Engineers collaborate 
 
 ![B2G-Agent concept: an AI mediator connecting building and power engineers](docs/assets/b2g-agent-concept.png)
 
+## Core Functions
+
+B2G-Agent is designed as the third participant in a Building Engineer–Power Engineer dialogue: translator, software operator, conversation governor, and technical secretary. Its main functions are:
+
+### 1. Cross-Domain Professional Translation
+
+- **Language translation:** explain building terminology in the power engineer's decision context, and power-system terminology in the building engineer's decision context.
+- **Model translation:** convert free-form professional opinions into a typed, validated shared case instead of requiring either engineer to edit simulation inputs manually.
+- **Impact translation:** turn model evidence into consequences the other engineer can act on—for example, translating a comfort or controls proposal into load, voltage, capacity, delivery, or rebound implications.
+
+### 2. Natural-Language Software Delegation
+
+The engineers express goals, constraints, preferences, and proposed changes in ordinary professional language. The LLM interprets the message, decides whether clarification, confirmation, or new evidence is needed, and creates a structured action plan. Deterministic code validates every allowed parameter before any scenario calculation is executed; the LLM is not allowed to invent engineering metrics.
+
+### 3. Evidence And Tool Orchestration
+
+B2G-Agent determines whether a turn requires building-side analysis, grid-side analysis, or a coupled run, then returns the evidence in language appropriate to both roles. **The current v0.3 research release executes B2G-Agent's built-in deterministic residential-renewal and demand-response models.** Its intended validated software layer is EnergyPlus through EnergyPlus-MCP and OpenDSS/power-system analysis through PowerMCP; those external adapters are clearly marked as planned and are not yet called by this release.
+
+### 4. AI Counterpart And Conversation Governance
+
+When only one human is available, the LLM plays the other engineering role as a scenario-constrained NPC. The mediator preserves each discipline's priorities, asks focused questions, requires confirmation for material changes, tracks unresolved constraints, and guides the discussion toward a jointly acceptable plan rather than producing an isolated answer.
+
+### 5. Traceability And Human Approval
+
+Each session maintains shared parameters, messages, simulation runs, a decision ledger, constraint checks, and a reproducible Markdown report. Human engineers retain responsibility for final approval; the prototype does not present its built-in equations as a calibrated EnergyPlus/OpenDSS engineering study or a settlement-grade demand-response baseline.
+
 ## Research Scenarios
 
 The local application now provides two selectable scenarios:
