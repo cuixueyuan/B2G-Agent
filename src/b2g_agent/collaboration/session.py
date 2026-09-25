@@ -42,7 +42,7 @@ class CollaborationSession:
         self,
         *,
         user_role: EngineerRole,
-        scenario_id: ResearchScenario | str = ResearchScenario.RENEWAL,
+        scenario_id: ResearchScenario | str = ResearchScenario.GRID_UPGRADE,
         mediator: B2GMediator | None = None,
         simulator: ResidentialCommunitySimulator | None = None,
         session_id: str | None = None,
@@ -338,7 +338,7 @@ class SessionStore:
     def create(
         self,
         role: EngineerRole,
-        scenario_id: ResearchScenario | str = ResearchScenario.RENEWAL,
+        scenario_id: ResearchScenario | str = ResearchScenario.GRID_UPGRADE,
     ) -> CollaborationSession:
         mediator = self._mediator_factory()
         require_llm = os.getenv("B2G_REQUIRE_LLM", "true").strip().lower() not in {

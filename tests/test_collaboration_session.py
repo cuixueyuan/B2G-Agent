@@ -76,7 +76,7 @@ class DemandResponseMediator(FakeMediator):
 def test_demand_response_session_produces_enrollment_evidence(tmp_path: Path) -> None:
     session = CollaborationSession(
         user_role="distribution_power_engineer",
-        scenario_id="harborview_demand_response_service",
+        scenario_id="demand_response_service",
         mediator=DemandResponseMediator(),  # type: ignore[arg-type]
         output_root=tmp_path,
     )
@@ -85,7 +85,7 @@ def test_demand_response_session_produces_enrollment_evidence(tmp_path: Path) ->
 
     assert result.simulation_run is not None
     assert result.simulation_run.metrics.dr_delivery_pct >= 90
-    assert session.snapshot().scenario_id.value == "harborview_demand_response_service"
+    assert session.snapshot().scenario_id.value == "demand_response_service"
     final = session.finalize()
     assert final.status == "ready"
     assert "Baseline method" in final.report_markdown

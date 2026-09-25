@@ -18,29 +18,25 @@ B2G-Agent is designed as the third participant in a Building Engineer–Power En
 
 ### 2. Natural-Language Software Delegation
 
-The engineers express goals, constraints, preferences, and proposed changes in ordinary professional language. The LLM interprets the message, decides whether clarification, confirmation, or new evidence is needed, and creates a structured action plan. Deterministic code validates every allowed parameter before any scenario calculation is executed; the LLM is not allowed to invent engineering metrics.
+Engineers state goals, constraints, and proposed changes in natural language. The LLM converts each message into a validated action plan and asks for clarification or confirmation when needed. Engineering metrics come only from deterministic calculations.
 
 ### 3. Evidence And Tool Orchestration
 
-B2G-Agent determines whether a turn requires building-side analysis, grid-side analysis, or a coupled run, then returns the evidence in language appropriate to both roles. **The current v0.3 research release executes B2G-Agent's built-in deterministic residential-renewal and demand-response models.** Its intended validated software layer is EnergyPlus through EnergyPlus-MCP and OpenDSS/power-system analysis through PowerMCP; those external adapters are clearly marked as planned and are not yet called by this release.
+B2G-Agent selects building-side, grid-side, or coupled analysis and explains the result to both roles. The current release runs built-in deterministic models; EnergyPlus-MCP and PowerMCP/OpenDSS are planned adapters and are not yet called.
 
-### 4. AI Counterpart And Conversation Governance
+### 4. Traceability And Human Approval
 
-When only one human is available, the LLM plays the other engineering role as a scenario-constrained NPC. The mediator preserves each discipline's priorities, asks focused questions, requires confirmation for material changes, tracks unresolved constraints, and guides the discussion toward a jointly acceptable plan rather than producing an isolated answer.
-
-### 5. Traceability And Human Approval
-
-Each session maintains shared parameters, messages, simulation runs, a decision ledger, constraint checks, and a reproducible Markdown report. Human engineers retain responsibility for final approval; the prototype does not present its built-in equations as a calibrated EnergyPlus/OpenDSS engineering study or a settlement-grade demand-response baseline.
+Each session saves the shared case, conversation, model runs, decision ledger, constraint checks, and final report. Human engineers retain final approval; results are not presented as calibrated EnergyPlus/OpenDSS studies or settlement-grade baselines.
 
 ## Research Scenarios
 
 The local application now provides two selectable scenarios:
 
-### 1. Harborview Residential Renewal
+### 1. Distribution Grid Upgrade
 
 The two engineers coordinate an 80-home expansion and retrofit program. They negotiate comfort, retrofit level, rooftop PV, peak flexibility, connection location, transformer capacity, and feeder capacity while checking voltage and thermal limits.
 
-### 2. Harborview Demand Response Service
+### 2. Demand Response Service
 
 The two engineers prepare a civic building for a utility demand-response service. They must agree on:
 
@@ -65,7 +61,7 @@ Pages 3 and 4 provide a clear return path to page 1, so a tester can start a fre
 
 | 1. Choose an engineering role | 2. Choose and review a scenario |
 |---|---|
-| ![Choose between Building Engineer and Distribution Power Engineer](docs/assets/screenshots/01-role-selection.png) | ![Choose between the residential-renewal and demand-response scenarios](docs/assets/screenshots/02-project-brief.png) |
+| ![Choose between Building Engineer and Distribution Power Engineer](docs/assets/screenshots/01-role-selection.png) | ![Choose between the distribution-grid-upgrade and demand-response scenarios](docs/assets/screenshots/02-project-brief.png) |
 
 | 3. Enter the co-design room | 4. Review the joint plan |
 |---|---|
@@ -162,7 +158,7 @@ Browser interface
       ├─ Role + research-scenario selection
       ├─ OpenAI-based mediator and AI counterpart
       ├─ Typed shared case state
-      ├─ Residential-renewal research model
+      ├─ Distribution-grid-upgrade research model
       ├─ Demand-response baseline and event model
       ├─ Decision ledger and candidate selection
       └─ Reproducible Markdown report

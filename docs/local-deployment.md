@@ -111,7 +111,7 @@ If the badge says `API not configured`, or session creation is rejected, stop th
 
 ## 6. Try Both Research Scenarios
 
-### Residential Renewal Example
+### Distribution Grid Upgrade Example
 
 As the Building Engineer, try:
 

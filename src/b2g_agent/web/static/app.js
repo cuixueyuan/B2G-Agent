@@ -8,8 +8,8 @@ const appState = {
 };
 
 const scenarioIds = {
-  renewal: "harborview_residential_renewal",
-  demandResponse: "harborview_demand_response_service",
+  gridUpgrade: "distribution_grid_upgrade",
+  demandResponse: "demand_response_service",
 };
 
 const roleLabels = {

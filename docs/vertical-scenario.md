@@ -2,7 +2,7 @@
 
 The two deliberately constrained scenarios validate professional mediation before external physics stacks are connected. Both use the same four-stage interface, two engineering roles, typed case state, LLM mediation, evidence execution, decision ledger, and final review.
 
-## Scenario 1: Harborview Residential Renewal
+## Scenario 1: Distribution Grid Upgrade
 
 A coastal community plans to add or renovate 80 homes on a radial feeder.
 
@@ -27,9 +27,9 @@ A coastal community plans to add or renovate 80 homes on a radial feeder.
 - transformer loading no greater than 100%;
 - comfort and indicative cost remain visible for human review.
 
-## Scenario 2: Harborview Demand Response Service
+## Scenario 2: Demand Response Service
 
-The Harborview Civic Center is preparing to enroll in a utility demand-response service. The central boundary object is no longer only building load: it is the relationship among the counterfactual baseline, actual event-day load, delivered reduction, and rebound.
+A civic building is preparing to enroll in a utility demand-response service. The central boundary object is no longer only building load: it is the relationship among the counterfactual baseline, actual event-day load, delivered reduction, and rebound.
 
 ### Building-side responsibilities
 

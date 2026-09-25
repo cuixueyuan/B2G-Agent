@@ -32,7 +32,7 @@ ALLOWED_PARAMETER_DESCRIPTIONS = {
 
 
 SCENARIO_PARAMETER_KEYS = {
-    ResearchScenario.RENEWAL: [
+    ResearchScenario.GRID_UPGRADE: [
         "cooling_setpoint_c",
         "building_count",
         "retrofit_level",
@@ -59,20 +59,20 @@ SCENARIO_PARAMETER_KEYS = {
 
 
 _SCENARIOS: dict[ResearchScenario, dict[str, Any]] = {
-    ResearchScenario.RENEWAL: {
-        "title": "Harborview Residential Renewal",
-        "short_title": "Residential renewal",
-        "kicker": "Scenario 01 · Growth and retrofit",
+    ResearchScenario.GRID_UPGRADE: {
+        "title": "Distribution Grid Upgrade",
+        "short_title": "Grid upgrade",
+        "kicker": "Scenario 01 · Load growth and upgrade",
         "selection_summary": (
             "Coordinate an 80-home expansion, building retrofit choices, and targeted feeder upgrades."
         ),
         "location": "A representative U.S. coastal community",
         "summary": (
-            "Harborview plans a phased residential expansion and retrofit program. "
+            "The study district plans a phased residential expansion and retrofit program. "
             "The building team must preserve occupant comfort and control retrofit cost, "
             "while the distribution team must keep voltage and equipment loading within limits."
         ),
-        "room_title": "Harborview Renewal Co-Design Room",
+        "room_title": "Distribution Grid Upgrade Room",
         "highlights": [
             {"label": "Homes", "value": "80"},
             {"label": "Connection", "value": "Bus 8"},
@@ -104,15 +104,15 @@ _SCENARIOS: dict[ResearchScenario, dict[str, Any]] = {
         ),
     },
     ResearchScenario.DEMAND_RESPONSE: {
-        "title": "Harborview Demand Response Service",
+        "title": "Demand Response Service",
         "short_title": "Demand response service",
         "kicker": "Scenario 02 · Baseline and flexibility",
         "selection_summary": (
             "Agree on a defensible building baseline and a reliable load-reduction commitment for a grid event."
         ),
-        "location": "Harborview Civic Center and its distribution feeder",
+        "location": "A civic building and its distribution feeder",
         "summary": (
-            "The Harborview Civic Center is preparing to enroll in a utility demand-response service. "
+            "A civic building is preparing to enroll in a utility demand-response service. "
             "The two engineers must agree on the counterfactual baseline load, event window, achievable "
             "reduction, comfort implications, post-event rebound, and the value delivered to the feeder."
         ),
@@ -183,12 +183,12 @@ def scenario_catalog() -> dict[str, Any]:
             }
         )
     return {
-        "user_roles": _role_payload(ResearchScenario.RENEWAL),
+        "user_roles": _role_payload(ResearchScenario.GRID_UPGRADE),
         "scenarios": scenarios,
     }
 
 
-def scenario_brief(scenario_id: ResearchScenario | str = ResearchScenario.RENEWAL) -> dict[str, Any]:
+def scenario_brief(scenario_id: ResearchScenario | str = ResearchScenario.GRID_UPGRADE) -> dict[str, Any]:
     normalized = normalize_scenario_id(scenario_id)
     definition = _SCENARIOS[normalized]
     keys = SCENARIO_PARAMETER_KEYS[normalized]
@@ -233,7 +233,7 @@ def allowed_parameter_descriptions(scenario_id: ResearchScenario | str) -> dict[
 def validate_parameter_changes(
     current: ScenarioParameters,
     changes: dict[str, Any],
-    scenario_id: ResearchScenario | str = ResearchScenario.RENEWAL,
+    scenario_id: ResearchScenario | str = ResearchScenario.GRID_UPGRADE,
 ) -> ScenarioParameters:
     allowed = set(SCENARIO_PARAMETER_KEYS[normalize_scenario_id(scenario_id)])
     unknown = sorted(set(changes) - allowed)
@@ -246,7 +246,7 @@ def validate_parameter_changes(
 
 def compact_case_context(
     parameters: ScenarioParameters,
-    scenario_id: ResearchScenario | str = ResearchScenario.RENEWAL,
+    scenario_id: ResearchScenario | str = ResearchScenario.GRID_UPGRADE,
 ) -> str:
     values = parameters.model_dump(mode="json")
     keys = SCENARIO_PARAMETER_KEYS[normalize_scenario_id(scenario_id)]

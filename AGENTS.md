@@ -2,7 +2,7 @@
 
 This project is B2G-Agent, a simulation-grounded AI mediator for building-grid co-design.
 
-The product contains two research scenarios: Harborview residential renewal and Harborview demand-response service. A human participates as either a Building Engineer or Distribution Power Engineer, an AI NPC represents the counterpart, and B2G-Agent manages translation, scenario evidence, decision tracking, and final review.
+The product contains two research scenarios: Distribution Grid Upgrade and Demand Response Service. A human participates as either a Building Engineer or Distribution Power Engineer, an AI NPC represents the counterpart, and B2G-Agent manages translation, scenario evidence, decision tracking, and final review.
 
 ## Repository Rules
 

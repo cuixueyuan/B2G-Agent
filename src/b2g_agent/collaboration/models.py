@@ -17,8 +17,8 @@ class EngineerRole(str, Enum):
 
 
 class ResearchScenario(str, Enum):
-    RENEWAL = "harborview_residential_renewal"
-    DEMAND_RESPONSE = "harborview_demand_response_service"
+    GRID_UPGRADE = "distribution_grid_upgrade"
+    DEMAND_RESPONSE = "demand_response_service"
 
 
 class RetrofitLevel(str, Enum):
@@ -105,7 +105,7 @@ class SimulationRun(BaseModel):
     label: str
     trigger: str
     scope: SimulationScope
-    scenario_id: ResearchScenario = ResearchScenario.RENEWAL
+    scenario_id: ResearchScenario = ResearchScenario.GRID_UPGRADE
     backend: str = "deterministic-vertical-scenario"
     created_at: datetime = Field(default_factory=utc_now)
     parameters: ScenarioParameters

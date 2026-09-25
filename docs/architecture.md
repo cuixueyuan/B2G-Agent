@@ -21,7 +21,7 @@ Local FastAPI service
   │   ├─ OpenAI planning pass -> validated MediatorPlan
   │   └─ OpenAI explanation pass -> validated MediatedReply
   ├─ ResidentialCommunitySimulator
-  │   ├─ residential-renewal equations
+  │   ├─ distribution-grid-upgrade equations
   │   └─ demand-response baseline/event equations
   └─ local JSON and Markdown artifacts
 
@@ -47,7 +47,7 @@ The API key is read only by the local Python process. Browser JavaScript never r
 
 `ScenarioParameters` is the cross-domain state. Each scenario exposes only a controlled subset.
 
-Residential renewal includes comfort setpoint, building count, retrofit, PV, peak flexibility, connection, transformer, and line capacity.
+Distribution Grid Upgrade includes comfort setpoint, building count, retrofit, PV, peak flexibility, connection, transformer, and line capacity.
 
 Demand-response service includes baseline method, baseline adjustment, participating assets, event window, kW commitment, rebound limit, comfort setpoint, connection, transformer, and line capacity.
 
@@ -55,7 +55,7 @@ An LLM response cannot add arbitrary fields because Pydantic rejects unknown sch
 
 ## Evidence Models
 
-The residential-renewal model produces a transparent 24-hour building and feeder profile with voltage and thermal proxies.
+The distribution-grid-upgrade model produces a transparent 24-hour building and feeder profile with voltage and thermal proxies.
 
 The demand-response model separately represents:
 

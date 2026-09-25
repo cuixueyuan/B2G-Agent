@@ -32,7 +32,7 @@ class ResidentialCommunitySimulator:
         trigger: str,
         scope: SimulationScope = SimulationScope.COUPLED,
         label: str | None = None,
-        scenario_id: ResearchScenario | str = ResearchScenario.RENEWAL,
+        scenario_id: ResearchScenario | str = ResearchScenario.GRID_UPGRADE,
     ) -> SimulationRun:
         normalized = ResearchScenario(scenario_id)
         if normalized == ResearchScenario.DEMAND_RESPONSE:
