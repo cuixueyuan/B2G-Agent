@@ -35,6 +35,8 @@ The deterministic research backend reports baseline peak, baseline confidence, d
 3. Negotiate with the AI counterpart in the mediated co-design room.
 4. Review the selected candidate, constraint checks, unresolved items, and reproducible Markdown report.
 
+Pages 3 and 4 provide a clear return path to page 1, so a tester can start a fresh session with a different role or scenario. Completed session artifacts remain saved locally.
+
 | 1. Choose an engineering role | 2. Choose and review a scenario |
 |---|---|
 | ![Choose between Building Engineer and Distribution Power Engineer](docs/assets/screenshots/01-role-selection.png) | ![Choose between the residential-renewal and demand-response scenarios](docs/assets/screenshots/02-project-brief.png) |

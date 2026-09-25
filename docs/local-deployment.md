@@ -105,6 +105,7 @@ Press `Ctrl+C` in the terminal to stop the service.
 4. Confirm the badge in the upper-right area says `LLM mediator · gpt-4.1-mini` or the model name you configured.
 5. Send a natural-language engineering proposal.
 6. Confirm that both a B2G-Agent explanation and an AI-counterpart response appear.
+7. Use `Start over` on page 3 or `Start new session` on page 4 to return to role selection and test another role or scenario.
 
 If the badge says `API not configured`, or session creation is rejected, stop the service and verify `.env` before continuing.
 

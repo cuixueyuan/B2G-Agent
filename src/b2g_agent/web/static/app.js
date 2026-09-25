@@ -72,6 +72,13 @@ function bindEvents() {
   document.querySelector("#rerun-button").addEventListener("click", runCurrentCase);
   document.querySelector("#review-button").addEventListener("click", finalizePlan);
   document.querySelector("#download-report").addEventListener("click", downloadReport);
+  document.querySelector("#restart-session-button").addEventListener("click", () => {
+    const confirmed = window.confirm(
+      "Return to role selection and start a new session? Your current session artifacts will remain saved locally.",
+    );
+    if (confirmed) resetToStart();
+  });
+  document.querySelector("#new-session-button").addEventListener("click", resetToStart);
 }
 
 function renderScenarioOptions(scenarios) {
@@ -487,6 +494,32 @@ function downloadReport() {
   link.download = `b2g-agent-${appState.session.session_id}-final-plan.md`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function resetToStart() {
+  appState.role = null;
+  appState.scenario = null;
+  appState.session = null;
+  appState.latestRun = null;
+  appState.finalPlan = null;
+
+  document.querySelectorAll(".scenario-card").forEach((card) => card.classList.remove("selected"));
+  document.querySelector("#scenario-detail").classList.add("is-hidden");
+  document.querySelector("#accept-brief").checked = false;
+  document.querySelector("#message-input").value = "";
+  document.querySelector("#messages").replaceChildren();
+  document.querySelector("#participant-row").replaceChildren();
+  document.querySelector("#metric-grid").replaceChildren();
+  document.querySelector("#parameter-list").replaceChildren();
+  document.querySelector("#decision-ledger").replaceChildren(
+    element("li", "", "No negotiated decisions yet."),
+  );
+  document.querySelector("#report-markdown").textContent = "";
+  document.querySelector(".report-details")?.removeAttribute("open");
+  document.querySelector("#backend-pill").textContent = "Preparing mediator…";
+  updateEnterButton();
+  showStage(1);
+  showToast("Ready for a new role and scenario.");
 }
 
 function showStage(number) {
