@@ -12,14 +12,16 @@ from b2g_agent.collaboration.models import (
     EngineerRole,
     MediatedReply,
     MediatorPlan,
+    ResearchScenario,
     ScenarioParameters,
     SimulationRun,
     SimulationScope,
 )
 from b2g_agent.collaboration.scenario import (
-    ALLOWED_PARAMETER_DESCRIPTIONS,
+    allowed_parameter_descriptions,
     compact_case_context,
     role_label,
+    scenario_title,
 )
 
 
@@ -27,18 +29,25 @@ ResponseModel = TypeVar("ResponseModel", bound=BaseModel)
 
 
 class B2GMediator:
-    """LLM-first mediator with a deterministic offline fallback.
+    """LLM mediator with an optional deterministic parser for library tests.
 
     The API key is read server-side only. The browser never receives it, and no
-    key or authorization header is written to session artifacts.
+    key or authorization header is written to session artifacts. The web app
+    enables required-LLM mode, so provider failures are surfaced instead of
+    silently switching to the deterministic parser.
     """
 
     def __init__(self, *, client: Any | None = None, model: str | None = None) -> None:
         _load_local_env()
         self.model = model or os.getenv("B2G_MODEL") or os.getenv("B2G_CHAT_MODEL") or "gpt-4.1-mini"
         self.enabled = os.getenv("B2G_LLM_ENABLED", "true").strip().lower() not in {"0", "false", "no"}
+        self.require_llm = os.getenv("B2G_REQUIRE_LLM", "true").strip().lower() not in {
+            "0",
+            "false",
+            "no",
+        }
         self._client = client if client is not None else self._build_client()
-        self.last_backend = f"openai:{self.model}" if self._client is not None else "local-fallback"
+        self.last_backend = f"openai:{self.model}" if self._client is not None else "not-configured"
         self.last_error: str | None = None
 
     @property
@@ -49,6 +58,7 @@ class B2GMediator:
         self,
         *,
         text: str,
+        scenario_id: ResearchScenario,
         user_role: EngineerRole,
         counterpart_role: EngineerRole,
         parameters: ScenarioParameters,
@@ -58,7 +68,7 @@ class B2GMediator:
             try:
                 plan = self._call_json(
                     MediatorPlan,
-                    system=_planning_prompt(user_role, counterpart_role),
+                    system=_planning_prompt(user_role, counterpart_role, scenario_id),
                     user=json.dumps(
                         {
                             "message": text,
@@ -73,13 +83,24 @@ class B2GMediator:
                 return plan
             except Exception as exc:  # pragma: no cover - network/provider dependent
                 self.last_error = exc.__class__.__name__
-        self.last_backend = "local-fallback"
-        return _local_plan(text, user_role, counterpart_role)
+                if self.require_llm:
+                    raise RuntimeError(
+                        "The configured LLM API request failed. Check your API key, model access, "
+                        "network connection, and provider quota; B2G-Agent did not use an offline fallback."
+                    ) from exc
+        elif self.require_llm:
+            raise RuntimeError(
+                "B2G-Agent requires your LLM API. Add a valid OPENAI_API_KEY and keep "
+                "B2G_LLM_ENABLED=true."
+            )
+        self.last_backend = "deterministic-parser"
+        return _local_plan(text, user_role, counterpart_role, scenario_id)
 
     def compose_reply(
         self,
         *,
         original_text: str,
+        scenario_id: ResearchScenario,
         user_role: EngineerRole,
         counterpart_role: EngineerRole,
         parameters: ScenarioParameters,
@@ -90,7 +111,7 @@ class B2GMediator:
             try:
                 reply = self._call_json(
                     MediatedReply,
-                    system=_reply_prompt(user_role, counterpart_role),
+                    system=_reply_prompt(user_role, counterpart_role, scenario_id),
                     user=json.dumps(
                         {
                             "original_message": original_text,
@@ -105,8 +126,17 @@ class B2GMediator:
                 return reply
             except Exception as exc:  # pragma: no cover - network/provider dependent
                 self.last_error = exc.__class__.__name__
-                self.last_backend = "local-fallback"
-        return _local_reply(user_role, counterpart_role, parameters, plan, run)
+                if self.require_llm:
+                    raise RuntimeError(
+                        "The configured LLM API request failed while composing the mediated reply; "
+                        "B2G-Agent did not use an offline fallback."
+                    ) from exc
+                self.last_backend = "deterministic-parser"
+        elif self.require_llm:
+            raise RuntimeError(
+                "B2G-Agent requires your LLM API to compose the mediated reply."
+            )
+        return _local_reply(user_role, counterpart_role, parameters, plan, run, scenario_id)
 
     def _call_json(
         self,
@@ -141,12 +171,17 @@ class B2GMediator:
         return OpenAI(api_key=api_key)
 
 
-def _planning_prompt(user_role: EngineerRole, counterpart_role: EngineerRole) -> str:
+def _planning_prompt(
+    user_role: EngineerRole,
+    counterpart_role: EngineerRole,
+    scenario_id: ResearchScenario,
+) -> str:
     schema = json.dumps(MediatorPlan.model_json_schema(), ensure_ascii=False)
-    allowed = json.dumps(ALLOWED_PARAMETER_DESCRIPTIONS, ensure_ascii=False)
+    allowed = json.dumps(allowed_parameter_descriptions(scenario_id), ensure_ascii=False)
     return f"""
 You are the planning layer of B2G-Agent, a simulation-grounded mediator between a
 {role_label(user_role)} and a {role_label(counterpart_role)}.
+The selected research scenario is {scenario_title(scenario_id)}.
 
 Your responsibilities are to understand the user's free-form engineering message,
 translate it for the counterpart, and decide whether a validated simulation is needed.
@@ -167,12 +202,17 @@ Rules:
 """.strip()
 
 
-def _reply_prompt(user_role: EngineerRole, counterpart_role: EngineerRole) -> str:
+def _reply_prompt(
+    user_role: EngineerRole,
+    counterpart_role: EngineerRole,
+    scenario_id: ResearchScenario,
+) -> str:
     schema = json.dumps(MediatedReply.model_json_schema(), ensure_ascii=False)
     return f"""
 You are B2G-Agent after the planning and optional simulation stages.
 The human is the {role_label(user_role)}. The simulated counterpart is the
 {role_label(counterpart_role)}.
+The selected research scenario is {scenario_title(scenario_id)}.
 
 Return JSON only and exactly match this JSON Schema:
 {schema}
@@ -193,6 +233,7 @@ def _local_plan(
     text: str,
     user_role: EngineerRole,
     counterpart_role: EngineerRole,
+    scenario_id: ResearchScenario,
 ) -> MediatorPlan:
     normalized = " ".join(text.lower().split())
     changes: dict[str, Any] = {}
@@ -218,10 +259,40 @@ def _local_plan(
     pv = re.search(r"(?:pv|光伏).*?(\d+(?:\.\d+)?)\s*kw", normalized)
     if pv:
         changes["pv_kw_per_building"] = float(pv.group(1))
+    dr_target = re.search(
+        r"(?:target|commitment|reduce|reduction|响应负荷|削减|承诺).*?(\d+(?:\.\d+)?)\s*kw",
+        normalized,
+    )
+    if dr_target:
+        changes["dr_target_kw_per_building"] = float(dr_target.group(1))
+    event_window = re.search(
+        r"(?:event|事件).*?(\d{1,2})(?::00)?\s*(?:-|to|至)\s*(\d{1,2})(?::00)?",
+        normalized,
+    )
+    if event_window:
+        start = int(event_window.group(1))
+        end = int(event_window.group(2))
+        changes["dr_event_start_hour"] = start
+        changes["dr_event_duration_hours"] = (end - start) % 24 or 1
+    baseline_adjustment = re.search(
+        r"(?:baseline|基线).*?(?:adjust|调整|上调|下调).*?(-?\d+(?:\.\d+)?)\s*%",
+        normalized,
+    )
+    if baseline_adjustment:
+        changes["baseline_adjustment_pct"] = float(baseline_adjustment.group(1))
+    if "weather-adjusted" in normalized or "weather adjusted" in normalized or "天气修正" in normalized:
+        changes["baseline_method"] = "weather_adjusted"
+    elif "matched day" in normalized or "匹配日" in normalized:
+        changes["baseline_method"] = "matched_day"
+    elif "10-day" in normalized or "ten-day" in normalized or "十日平均" in normalized:
+        changes["baseline_method"] = "recent_10_day_average"
     if any(word in normalized for word in ["deep retrofit", "深度改造"]):
         changes["retrofit_level"] = "deep"
     elif any(word in normalized for word in ["standard retrofit", "标准改造"]):
         changes["retrofit_level"] = "standard"
+
+    allowed = set(allowed_parameter_descriptions(scenario_id))
+    changes = {key: value for key, value in changes.items() if key in allowed}
 
     finalize = any(word in normalized for word in ["finalize", "final plan", "定稿", "最终方案"])
     should_simulate = bool(changes) or any(
@@ -266,6 +337,7 @@ def _local_reply(
     parameters: ScenarioParameters,
     plan: MediatorPlan,
     run: SimulationRun | None,
+    scenario_id: ResearchScenario,
 ) -> MediatedReply:
     if plan.clarification_question:
         return MediatedReply(
@@ -279,7 +351,7 @@ def _local_reply(
         return MediatedReply(
             mediator_message=(
                 f"I interpreted this as: {plan.interpreted_intent} No new simulation was run. "
-                f"Current shared case: {compact_case_context(parameters)}."
+                f"Current shared case: {compact_case_context(parameters, scenario_id)}."
             ),
             counterpart_message=(
                 f"As the {role_label(counterpart_role)}, I understand the proposal. "
@@ -290,6 +362,37 @@ def _local_reply(
         )
 
     metrics = run.metrics
+    if scenario_id == ResearchScenario.DEMAND_RESPONSE:
+        mediator_message = (
+            f"I translated the proposal into the shared demand-response case and ran the {run.backend} backend. "
+            f"The agreed baseline peaks at {metrics.baseline_peak_kw_per_building:.2f} kW per building, "
+            f"the modeled event delivers {metrics.delivered_reduction_kw_per_building:.2f} kW per building "
+            f"({metrics.dr_delivery_pct:.1f}% of the commitment), and post-event rebound is "
+            f"{metrics.rebound_pct:.1f}% of the target."
+        )
+        if metrics.feasible:
+            counterpart_message = (
+                f"As the {role_label(counterpart_role)}, I can accept this baseline and response commitment "
+                "as a candidate for enrollment review, subject to measurement and controls validation."
+            )
+            next_question = "Should we finalize this commitment or test a more conservative reduction target?"
+        else:
+            counterpart_message = (
+                f"As the {role_label(counterpart_role)}, I cannot approve this demand-response commitment yet. "
+                "We should revise the baseline, reduction target, event window, or rebound limit."
+            )
+            next_question = "Which assumption should we revise first: baseline method, target kW, or rebound limit?"
+        return MediatedReply(
+            mediator_message=mediator_message,
+            counterpart_message=counterpart_message,
+            next_question=next_question,
+            decision_note=(
+                f"Run {run.run_id}: {metrics.dr_delivery_pct:.1f}% DR delivery; "
+                f"baseline confidence {metrics.baseline_confidence_score:.1f}/100; "
+                f"status={'feasible' if metrics.feasible else 'needs revision'}."
+            ),
+        )
+
     mediator_message = (
         f"I translated the proposal into validated scenario parameters and ran the {run.backend} backend. "
         f"The feeder peak is {metrics.feeder_peak_kw:.1f} kW, minimum voltage is "

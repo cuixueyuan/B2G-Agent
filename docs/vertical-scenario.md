@@ -1,68 +1,90 @@
-# Harborview Residential Renewal
+# B2G-Agent Research Scenarios
 
-## Purpose
+The two deliberately constrained scenarios validate professional mediation before external physics stacks are connected. Both use the same four-stage interface, two engineering roles, typed case state, LLM mediation, evidence execution, decision ledger, and final review.
 
-Harborview is a deliberately constrained vertical scenario for validating the complete B2G-Agent interaction loop before connecting large external simulation stacks. It is designed to produce meaningful building-grid trade-offs within seconds and to make every equation and decision variable inspectable.
+## Scenario 1: Harborview Residential Renewal
 
-## Scenario
+A coastal community plans to add or renovate 80 homes on a radial feeder.
 
-A representative coastal community plans to add or renovate 80 residential buildings on a radial distribution feeder. The human participates as either a Building Engineer or Distribution Power Engineer. The counterpart is an AI NPC with scenario-defined objectives, while B2G-Agent mediates and records the process.
+### Building-side decisions
 
-### Building objectives
+- cooling setpoint;
+- participating building count;
+- retrofit level;
+- rooftop PV per building;
+- peak demand-response percentage.
 
-- preserve a defensible cooling setpoint and occupant comfort;
-- choose no, standard, or deep retrofit scope;
-- evaluate rooftop PV and peak-period demand flexibility;
-- avoid unnecessary building-side capital cost.
+### Grid-side decisions
 
-### Grid objectives
+- connection bus;
+- transformer capacity;
+- feeder line-capacity proxy.
 
-- maintain minimum voltage at or above 0.95 p.u.;
-- keep line and transformer loading at or below 100%;
-- prefer targeted upgrades and adequate operating margin;
-- serve the agreed building program reliably.
+### Acceptance checks
 
-## Decision Space
+- minimum voltage at least 0.95 p.u.;
+- line loading no greater than 100%;
+- transformer loading no greater than 100%;
+- comfort and indicative cost remain visible for human review.
 
-| Parameter | Range | Domain significance |
-|---|---:|---|
-| Cooling setpoint | 20–28 °C | Comfort and cooling demand |
-| Building count | 10–300 | Development scale |
-| Retrofit level | none / standard / deep | Envelope and HVAC demand multiplier |
-| PV per building | 0–15 kW | Daytime net-load reduction |
-| Demand response | 0–35% | Peak-period load reduction |
-| Connection bus | bus 3–8 | Electrical distance from the source |
-| Transformer capacity | 250–1500 kVA | Substation thermal headroom |
-| Line capacity | 200–1500 kW | Feeder thermal headroom proxy |
+## Scenario 2: Harborview Demand Response Service
 
-## Deterministic Backend
+The Harborview Civic Center is preparing to enroll in a utility demand-response service. The central boundary object is no longer only building load: it is the relationship among the counterfactual baseline, actual event-day load, delivered reduction, and rebound.
 
-The backend produces one 24-hour profile. Residential demand combines transparent morning, evening, appliance, envelope, and cooling shapes. Cooling demand responds to setpoint and retrofit level. PV follows a daytime production curve, while demand response reduces the 15:00–20:00 gross load with a small rebound.
+### Building-side responsibilities
 
-The community net load is added to an existing feeder profile. Voltage drop varies by connection-bus distance. Line loading and transformer apparent-power loading are computed from the resulting feeder demand.
+- explain normal operating schedules and weather sensitivity;
+- choose or challenge the baseline method;
+- identify HVAC and other controllable loads;
+- defend comfort constraints;
+- estimate a repeatable reduction and acceptable rebound.
 
-This formulation is intended for workflow testing and reproducible demonstrations. It is not calibrated to a particular city, building stock, weather file, feeder, or utility planning standard.
+### Grid-side responsibilities
 
-## Expected Negotiation
+- reject an inflated or poorly supported baseline;
+- define event timing and needed kW relief;
+- verify delivery against the commitment;
+- evaluate feeder value and operating limits;
+- determine whether the service is reliable enough for enrollment.
 
-The baseline is intentionally near or beyond thermal limits. A participant can respond through several strategies:
+### Shared parameters
 
-- reduce demand through standard/deep retrofit;
-- add demand response;
-- adjust building program or comfort assumptions;
-- select a closer connection point;
-- increase transformer or feeder capacity;
-- combine moderate building and grid interventions.
+| Parameter | Meaning | Current range |
+|---|---|---|
+| `baseline_method` | Counterfactual estimation method | recent 10-day average, weather-adjusted, or matched day |
+| `baseline_adjustment_pct` | Explicit adjustment to the estimated baseline | -15% to +15% |
+| `building_count` | Number of participating assets | 1 to 300 |
+| `cooling_setpoint_c` | Event-day comfort-control input | 20-28 °C |
+| `dr_event_start_hour` | Local event start | hour 0-23 |
+| `dr_event_duration_hours` | Event duration | 1-6 hours |
+| `dr_target_kw_per_building` | Committed reduction | 0-5 kW per building |
+| `max_rebound_pct` | Maximum post-event rebound | 0-50% of target |
+| `target_bus` | Feeder connection | bus 3-8 |
 
-This creates a real negotiation rather than a one-click optimum. B2G-Agent selects the best available feasible run for final review using building satisfaction, grid reliability, and indicative cost; the human still decides whether to approve it.
+### Evidence
 
-## Promotion To Real Simulators
+- baseline peak per building;
+- baseline confidence score;
+- event baseline energy;
+- average delivered kW per building;
+- percentage of commitment delivered;
+- post-event rebound kW and percentage;
+- voltage, feeder loading, and transformer loading.
 
-The vertical scenario should be promoted one capability at a time:
+### Acceptance checks
 
-1. replace the load equations with EnergyPlus archetype runs;
-2. validate thermostat and schedule edits through EnergyPlus-MCP;
-3. standardize EnergyPlus output into the shared load contract;
-4. replace radial equations with a PowerMCP/OpenDSS feeder model;
-5. compare deterministic and real-simulator metrics for regression;
-6. enable the real backend only after tolerance and provenance tests pass.
+- baseline confidence at least 80/100;
+- delivered reduction at least 90% of commitment;
+- rebound no greater than the agreed limit;
+- no voltage or thermal violation.
+
+The equations are intentionally inspectable and deterministic. They are not a tariff-specific settlement calculation and do not use measured interval data.
+
+## Promotion Path
+
+1. Validate EnergyPlus-MCP tools for schedules, loads, thermostats, outputs, and event control.
+2. Define a versioned building-load contract for baseline and event-day results.
+3. Validate PowerMCP/OpenDSS tools for feeder compilation, time-series execution, and equipment changes.
+4. Add real interval-meter baseline methods and program-specific settlement rules.
+5. Preserve model diffs, tool versions, convergence status, units, and run provenance.
+6. Compare deterministic research results with known EnergyPlus/OpenDSS cases before claiming engineering validity.

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "b2g-agent"
-version = "0.2.0"
-description = "A simulation-grounded AI mediator for building-grid co-design."
+version = "0.3.0"
+description = "An LLM-mediated research environment for building-grid co-design."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -13,10 +13,8 @@ authors = [{ name = "B2G-Agent contributors" }]
 dependencies = [
   "fastapi>=0.115",
   "openai>=1.0",
-  "PyYAML>=6.0",
   "pydantic>=2.0",
   "python-dotenv>=1.0",
-  "opendssdirect.py>=0.9",
   "uvicorn[standard]>=0.30",
 ]
 
@@ -24,7 +22,6 @@ dependencies = [
 dev = ["httpx>=0.27", "pytest>=8.0"]
 
 [project.scripts]
-b2g-building-to-grid = "b2g_agent.cli:run_building_to_grid"
 b2g-web = "b2g_agent.web.cli:main"
 
 [tool.setuptools.packages.find]

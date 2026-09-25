@@ -1,30 +1,32 @@
-# Simulator Capability Matrix
+# Capability And Tool Matrix
 
-An MCP server's existence does not guarantee that every B2G-Agent decision can be executed safely. This matrix separates implemented behavior, existing legacy paths, and integration work that still requires verification.
+The table distinguishes current executable behavior from future external-tool integrations.
 
-| User-level action | Structured object | Current vertical backend | Legacy direct path | Target MCP path | Status / verification |
-|---|---|---|---|---|---|
-| Change cooling setpoint | `cooling_setpoint_c` | Deterministic load response | Not implemented | EnergyPlus-MCP schedule/setpoint extension | **Gap:** add IDF diff and output regression tests |
-| Change building count | `building_count` | Implemented | Load scaling | B2G coupling layer | Implemented for the vertical scenario |
-| Select retrofit level | `retrofit_level` | Deterministic multiplier | Not implemented | EnergyPlus-MCP envelope/HVAC tools | Partial; map to explicit measures |
-| Add rooftop PV | `pv_kw_per_building` | Implemented | Not implemented | EnergyPlus + OpenDSS/PVSystem workflow | Requires consistent behind-the-meter treatment |
-| Add demand response | `demand_response_pct` | Implemented | Not implemented | EnergyPlus schedules or post-processed load contract | Requires schedule and rebound policy |
-| Change connection bus | `target_bus` | Implemented | OpenDSS load edit | PowerMCP/OpenDSS | Verify target existence and phase compatibility |
-| Change transformer capacity | `transformer_capacity_kva` | Implemented | Not implemented | PowerMCP/OpenDSS transformer edit | Audit tool support and rating semantics |
-| Change line capacity | `line_capacity_kw` | Implemented proxy | Reads `NormAmps` | PowerMCP/OpenDSS line edit | Replace kW proxy with conductor/ampacity model |
-| Run 24-hour building model | Scenario run | Implemented surrogate | Real EnergyPlus single-building path | EnergyPlus-MCP | Validate weather, timestep, meter, and run status |
-| Run grid snapshots | Scenario run | Implemented surrogate | OpenDSSDirect snapshots | PowerMCP/OpenDSS | Extend to QSTS and preserve convergence diagnostics |
-| Produce final joint report | `FinalPlan` | Implemented | Markdown report | B2G orchestration layer | Implemented; add real-backend provenance |
+| Capability | Current implementation | EnergyPlus-MCP | PowerMCP / OpenDSS | Status |
+|---|---|---|---|---|
+| Interpret free-form engineering input | OpenAI API through the official Python SDK | Not involved | Not involved | Implemented |
+| Validate proposed changes | Pydantic schema plus scenario allowlist | Not involved | Not involved | Implemented |
+| Residential 24-hour load response | Deterministic research equations | Planned calibrated replacement | Not involved | Research surrogate |
+| Feeder voltage and loading | Deterministic radial-feeder proxy | Not involved | Planned calibrated replacement | Research surrogate |
+| Cooling setpoint and retrofit | Deterministic multipliers | Planned schedule/HVAC/model changes | Not involved | Research surrogate |
+| Demand-response baseline | Recent-average, weather-adjusted, or matched-day research formulation | Planned building-result source | Not involved | Research surrogate; not settlement-grade |
+| DR event load reduction | Target, curtailable-load limit, delivery, and rebound equations | Planned schedule/control execution | Planned feeder-impact validation | Research surrogate |
+| Connection and capacity changes | Validated shared parameters | Not involved | Planned topology/equipment edits | Research surrogate |
+| Scenario report | Local JSON and Markdown artifacts | Future provenance source | Future provenance source | Implemented |
 
-## Acceptance Rule For A New Capability
+## Explicit Non-Use Statement
 
-A capability is not marked production-ready until it has:
+The current release does **not** install, import, start, or call EnergyPlus-MCP, PowerMCP, EnergyPlus, or OpenDSS. Those projects are cited as intended integration targets. No result in the current UI should be described as an EnergyPlus or OpenDSS result.
 
-1. a typed input schema and units;
-2. a supported MCP tool or deterministic adapter;
-3. a pre-execution validation check;
-4. an input/model diff;
+## Acceptance Rule For A Future External Capability
+
+A capability is not production-ready until it has:
+
+1. a typed input schema and explicit units;
+2. a verified MCP tool or deterministic adapter;
+3. pre-execution validation and human confirmation policy;
+4. a recorded input/model diff;
 5. simulator success and convergence checks;
 6. result extraction with units and provenance;
-7. a regression test against a known case;
-8. a user-facing explanation of limitations.
+7. regression tests against a known case;
+8. a user-facing statement of limitations.

@@ -1,54 +1,51 @@
 # B2G-Agent
 
-**A simulation-grounded AI mediator for building–grid co-design.**
+**An LLM-mediated research environment for building-grid co-design.**
 
-B2G-Agent helps building engineers and distribution power engineers collaborate without requiring either person to master the other discipline's terminology or simulation software. It interprets free-form professional input, translates it into a shared engineering case, decides when evidence is needed, runs a validated scenario backend, explains the consequences to both sides, and records the path to a joint plan.
+B2G-Agent helps Building Engineers and Distribution Power Engineers collaborate without requiring either person to master the other discipline's terminology or simulation workflow. A human selects one role, an LLM plays the other role as an AI counterpart, and B2G-Agent interprets free-form input, translates professional implications, runs a transparent scenario model, and records the path to a joint plan.
 
-![B2G-Agent concept: an AI mediator connecting building and power engineers to EnergyPlus and OpenDSS](docs/assets/b2g-agent-concept.png)
+![B2G-Agent concept: an AI mediator connecting building and power engineers](docs/assets/b2g-agent-concept.png)
 
-## Why B2G-Agent
+## Research Scenarios
 
-### 1. Cross-domain professional mediation
+The local application now provides two selectable scenarios:
 
-B2G-Agent performs three kinds of translation:
+### 1. Harborview Residential Renewal
 
-- **Language translation:** explains each discipline's terminology in the other engineer's decision context.
-- **Model translation:** maps natural language to validated building and grid parameters.
-- **Impact translation:** converts simulation evidence into consequences the counterpart can act on.
+The two engineers coordinate an 80-home expansion and retrofit program. They negotiate comfort, retrofit level, rooftop PV, peak flexibility, connection location, transformer capacity, and feeder capacity while checking voltage and thermal limits.
 
-### 2. Natural-language simulation delegation
+### 2. Harborview Demand Response Service
 
-Engineers state goals, constraints, preferences, and proposed changes. The LLM interprets the message and proposes a structured action plan; typed schemas validate the plan; deterministic code applies allowed changes; the simulation backend computes the evidence; and the LLM explains the result. The LLM never fabricates engineering metrics.
+The two engineers prepare a civic building for a utility demand-response service. They must agree on:
 
-## Current Vertical Slice
+- a defensible counterfactual baseline method;
+- any justified baseline adjustment;
+- the event start time and duration;
+- a realistic kW reduction commitment per building;
+- comfort and controllable-load implications;
+- post-event rebound limits;
+- measurable delivery and feeder benefit.
 
-The runnable web application implements the **Harborview Residential Renewal** scenario:
+The deterministic research backend reports baseline peak, baseline confidence, delivered reduction, delivery percentage, rebound, voltage, and equipment loading. It is not a settlement-grade baseline or calibrated building-controls model.
 
-1. Choose to participate as a Building Engineer or Distribution Power Engineer.
-2. Review a constrained 80-home expansion and retrofit brief.
-3. Negotiate with an AI counterpart inside a three-way co-design room.
-4. Compare building comfort, grid reliability, voltage, equipment loading, and indicative cost.
-5. Produce a traceable final-plan Markdown report for human review.
+## Four-Stage Interface
 
-The current scenario exposes eight validated decisions: cooling setpoint, building count, retrofit level, rooftop PV, demand response, connection bus, transformer capacity, and line capacity.
+1. Choose to participate as the Building Engineer or Distribution Power Engineer.
+2. Choose one of the two research scenarios and review its responsibilities and evidence boundary.
+3. Negotiate with the AI counterpart in the mediated co-design room.
+4. Review the selected candidate, constraint checks, unresolved items, and reproducible Markdown report.
 
-> **Evidence boundary:** the vertical slice currently uses a transparent deterministic residential-load and radial-feeder backend. It demonstrates the complete mediation, tool-planning, evidence, and decision workflow, but it is not a calibrated EnergyPlus/OpenDSS engineering study. EnergyPlus-MCP and PowerMCP are the next validated backend integrations; the legacy single-building workflow already supports direct EnergyPlus and OpenDSS execution.
-
-## Interface Preview
-
-The complete local experience has four stages. These screenshots were captured from the offline fallback mode, so no API key is required to reproduce them.
-
-| 1. Choose an engineering role | 2. Review the project brief |
+| 1. Choose an engineering role | 2. Choose and review a scenario |
 |---|---|
-| ![Choose between Building Engineer and Distribution Power Engineer](docs/assets/screenshots/01-role-selection.png) | ![Review the Harborview project brief, counterpart, and simulation boundary](docs/assets/screenshots/02-project-brief.png) |
+| ![Choose between Building Engineer and Distribution Power Engineer](docs/assets/screenshots/01-role-selection.png) | ![Choose between the residential-renewal and demand-response scenarios](docs/assets/screenshots/02-project-brief.png) |
 
 | 3. Enter the co-design room | 4. Review the joint plan |
 |---|---|
-| ![Three-way co-design room with shared evidence and case state](docs/assets/screenshots/03-codesign-room.png) | ![Final decision package, constraint checks, and downloadable report](docs/assets/screenshots/04-final-review.png) |
+| ![Three-way co-design room with shared demand-response evidence](docs/assets/screenshots/03-codesign-room.png) | ![Final decision package and demand-response acceptance checks](docs/assets/screenshots/04-final-review.png) |
 
-## Quick Start
+## Local Installation With Your Own API Key
 
-Python 3.11 or newer and Git are required. EnergyPlus, OpenDSS, Node.js, and an API key are **not** required for the four-stage offline demo.
+Python 3.11 or newer and Git are required. Every interactive session requires the tester's own OpenAI API key; B2G-Agent will refuse to create a session when the key is missing or still contains the example placeholder.
 
 ### Windows PowerShell
 
@@ -60,7 +57,7 @@ py -3.11 -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 Copy-Item .env.example .env
-b2g-web
+notepad .env
 ```
 
 ### macOS or Linux
@@ -70,139 +67,136 @@ git clone https://github.com/cuixueyuan/B2G-Agent.git
 cd B2G-Agent
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 cp .env.example .env
+```
+
+Edit `.env` and replace the placeholder with your own key:
+
+```dotenv
+OPENAI_API_KEY=replace_with_your_actual_api_key
+B2G_MODEL=gpt-4.1-mini
+B2G_LLM_ENABLED=true
+B2G_REQUIRE_LLM=true
+```
+
+Start the local application:
+
+```text
 b2g-web
 ```
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000). Stop the local service with `Ctrl+C`.
+Open <http://127.0.0.1:8000>. The co-design room should display `LLM mediator · gpt-4.1-mini`. If session creation reports that an API key is required, stop the process with `Ctrl+C`, correct `.env`, and restart it.
 
-The copied `.env` starts with `B2G_LLM_ENABLED=false`, so the complete interface and deterministic scenario run locally without contacting an LLM provider.
-
-### Enable the LLM mediator with your own API key
-
-Stop the service, edit the local `.env`, and replace the values below:
-
-```dotenv
-OPENAI_API_KEY=your_own_api_key_here
-B2G_MODEL=gpt-4.1-mini
-B2G_LLM_ENABLED=true
-```
-
-Restart `b2g-web` after saving the file. The real `.env` is ignored by Git and must never be committed. The key is loaded only by the Python server; it is never returned by an API endpoint or sent to the browser.
-
-For environment verification, alternative launch commands, tests, common Windows issues, and troubleshooting, see the [complete local deployment guide](docs/local-deployment.md).
+The real `.env` is ignored by Git. Never paste the key into browser JavaScript, source files, screenshots, issues, or commits. See the [complete local deployment guide](docs/local-deployment.md) for verification and troubleshooting.
 
 ## Interaction Model
 
 ```text
 Free-form engineer message
         ↓
-Role-aware LLM interpretation
+Role- and scenario-aware LLM interpretation
         ↓
-Validated parameter/action schema ──→ clarify or request confirmation
+Validated parameter/action schema ──→ clarification or confirmation
         ↓
-Building / grid / coupled simulation decision
-        ↓
-Deterministic execution and constraint verification
+Scenario-specific evidence execution
         ↓
 Audience-specific translation + AI counterpart response
         ↓
-Decision ledger → scenario comparison → final human review
+Decision ledger → candidate comparison → final human review
 ```
 
-The three speakers are deliberately separate:
+The LLM interprets intent and writes explanations; deterministic code validates parameter names and ranges, executes the scenario equations, and calculates engineering metrics. The LLM is not allowed to invent simulation results.
 
-- **Human engineer:** owns professional intent and final approval.
-- **AI counterpart:** represents the other discipline's scenario-defined objectives and constraints.
-- **B2G-Agent mediator:** interprets, translates, runs evidence, manages the discussion, and records decisions.
+## Tool And Attribution Status
+
+This table distinguishes software that the current release actually executes from tools that are cited as future integration targets.
+
+| Tool or project | Current status in B2G-Agent | Purpose |
+|---|---|---|
+| [OpenAI Python SDK](https://github.com/openai/openai-python) | **Used** | Calls the tester-selected OpenAI model from the local Python server. |
+| [FastAPI](https://github.com/fastapi/fastapi) | **Used** | Provides the local HTTP API and serves the browser interface. |
+| [Uvicorn](https://github.com/encode/uvicorn) | **Used** | Runs the local ASGI service started by `b2g-web`. |
+| [Pydantic](https://github.com/pydantic/pydantic) | **Used** | Validates LLM plans, scenario parameters, sessions, and reports. |
+| [python-dotenv](https://github.com/theskumar/python-dotenv) | **Used** | Loads the tester's local `.env` without exposing it to the browser. |
+| [EnergyPlus-MCP](https://github.com/LBNL-ETA/EnergyPlus-MCP) | **Cited; not integrated** | Planned EnergyPlus model inspection, modification, execution, and result extraction. It is not installed, imported, or called by this release. |
+| [PowerMCP](https://github.com/Power-Agent/PowerMCP) from the Power-Agent project | **Cited; not integrated** | Planned OpenDSS and power-system tool orchestration. It is not installed, imported, or called by this release. |
+| EnergyPlus and OpenDSS | **Not executed** | Future validated physics backends. Current metrics come from B2G-Agent's transparent deterministic research equations. |
+
+External projects retain their own licenses and attribution. No EnergyPlus-MCP or PowerMCP source code is vendored into this repository.
 
 ## Architecture
 
 ```text
-Browser UI
-  └─ FastAPI session service
-      ├─ Conversation governor and confirmation policy
-      ├─ LLM mediator (structured JSON only)
-      ├─ Shared B2G case state
-      ├─ ResidentialCommunitySimulator (current vertical backend)
-      ├─ EnergyPlus / OpenDSS legacy adapters
-      ├─ EnergyPlus-MCP / PowerMCP extension boundary
-      └─ Session artifacts and final decision report
+Browser interface
+  └─ Local FastAPI service
+      ├─ Role + research-scenario selection
+      ├─ OpenAI-based mediator and AI counterpart
+      ├─ Typed shared case state
+      ├─ Residential-renewal research model
+      ├─ Demand-response baseline and event model
+      ├─ Decision ledger and candidate selection
+      └─ Reproducible Markdown report
+
+Planned adapters, not active in this release
+  ├─ EnergyPlus-MCP
+  └─ PowerMCP / OpenDSS
 ```
 
-See [architecture.md](docs/architecture.md), [vertical-scenario.md](docs/vertical-scenario.md), [capability-matrix.md](docs/capability-matrix.md), and [security.md](docs/security.md).
+See [architecture.md](docs/architecture.md), [research-scenarios.md](docs/vertical-scenario.md), [capability-matrix.md](docs/capability-matrix.md), and [security.md](docs/security.md).
 
 ## API Endpoints
 
 - `GET /api/health` — local service status.
-- `GET /api/scenario` — scenario brief and allowed decision space.
-- `POST /api/sessions` — create a role-aware session.
+- `GET /api/scenarios` — role information and two-scenario catalog.
+- `GET /api/scenarios/{scenario_id}` — selected scenario brief and decision space.
+- `POST /api/sessions` — create a role- and scenario-aware session.
 - `POST /api/sessions/{id}/messages` — mediate one free-form turn.
 - `POST /api/sessions/{id}/simulate` — rerun the current shared case.
 - `POST /api/sessions/{id}/finalize` — select and report the best available candidate.
 
-Interactive API documentation is available at `/docs` while the service is running.
-
-## Existing Simulation Workflows
-
-The earlier deterministic workflow remains available:
-
-```bash
-python samples/single-building-to-grid/scripts/run_building_to_grid.py \
-  --config samples/single-building-to-grid/configs/building_to_grid.yaml
-```
-
-The archived samples include:
-
-- `samples/single-building-to-grid`: mock or real EnergyPlus-to-OpenDSS coupling.
-- `samples/building-cluster-to-grid`: deterministic 50-building synthetic cluster; the ResStock backend remains scaffold-only.
+Interactive API documentation is available at `/docs` while the local service is running.
 
 ## Testing
 
-```bash
-pytest
+Tests use fake mediator objects and never require a real API key:
+
+```text
+python -m pytest -q
 ```
 
-Unit tests never require a real API key, EnergyPlus, or OpenDSS execution. They cover the existing coupling workflow, EnergyPlus parsing, OpenDSS behavior, LLM action validation, the new residential vertical simulator, collaboration sessions, and the web API.
+The suite covers both scenario models, parameter validation, mediated sessions, final reports, API routes, and secret-safe configuration.
 
 ## Repository Layout
 
 ```text
 src/b2g_agent/
-  collaboration/       # roles, shared state, mediator, scenario, and session logic
-  web/                 # FastAPI app and four-stage browser interface
-  agents/              # existing deterministic workflow agents
-  tools/               # EnergyPlus/OpenDSS wrappers and data utilities
-  cases/               # reusable workflow orchestration
-samples/               # archived single-building and cluster examples
-docs/                  # architecture, scenario, capability, and security documentation
-tests/                 # unit and API tests
+  collaboration/       # roles, scenarios, LLM mediator, simulation, and sessions
+  web/                 # FastAPI service and four-stage browser interface
+docs/                  # architecture, capabilities, security, screenshots, and setup
+tests/                 # deterministic unit and API tests
 ```
 
-## External Ecosystem
+The earlier `single-building-to-grid` and `building-cluster-to-grid` samples and their dedicated workflow code were removed in v0.3.0 because they were not part of the current mediated collaboration product.
 
-B2G-Agent is designed to orchestrate, not duplicate, the domain tool ecosystems:
+## Research Boundary And Roadmap
 
-- [PowerMCP](https://github.com/Power-Agent/PowerMCP), maintained by the Harvard Power and AI Initiative, provides MCP servers for OpenDSS and other power-system tools.
-- [EnergyPlus-MCP](https://github.com/LBNL-ETA/EnergyPlus-MCP), developed by Lawrence Berkeley National Laboratory, provides MCP tools for EnergyPlus model inspection, modification, execution, and analysis.
+The included equations are auditable workflow surrogates, not professional planning, settlement, or operational models. Human engineers retain approval responsibility.
 
-Those projects retain their own licenses and attribution. They are not vendored into this repository.
+Next validation stages:
 
-## Roadmap
-
-- Validate thermostat and schedule modification through EnergyPlus-MCP.
-- Connect PowerMCP/OpenDSS for feeder compilation, scenario edits, and QSTS analysis.
-- Add a capability registry that selects MCP tools only when required actions are supported.
-- Add a real two-human collaboration mode alongside the current human-plus-NPC mode.
-- Add scenario comparison, sensitivity analysis, and multi-objective trade-off views.
-- Evaluate communication accuracy, tool-selection accuracy, time to feasible agreement, reproducibility, and professional trust.
+- connect thermostat, schedules, loads, and event controls through EnergyPlus-MCP;
+- connect feeder compilation, equipment changes, QSTS, and convergence checks through PowerMCP/OpenDSS;
+- compare simulated baselines with interval-meter methods and program settlement rules;
+- add a real two-human collaboration mode;
+- evaluate translation accuracy, tool selection, agreement quality, reproducibility, and professional trust.
 
 ## Citation
 
 ```bibtex
 @software{b2g_agent,
-  title  = {B2G-Agent: A Simulation-Grounded AI Mediator for Building--Grid Co-Design},
+  title  = {B2G-Agent: An LLM-Mediated Research Environment for Building--Grid Co-Design},
   author = {Xueyuan Cui},
   year   = {2026},
   url    = {https://github.com/cuixueyuan/B2G-Agent}
@@ -211,4 +205,4 @@ Those projects retain their own licenses and attribution. They are not vendored 
 
 ## License
 
-Released under the MIT License. External simulators and MCP servers are governed by their respective licenses.
+Released under the MIT License. External projects are governed by their respective licenses.

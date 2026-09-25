@@ -1,90 +1,84 @@
 # B2G-Agent Architecture
 
-## Product Boundary
-
-B2G-Agent is a mediator and orchestrator. It does not replace professional judgment or numerical simulation. The LLM is allowed to interpret language, propose a structured plan, generate role-aware explanations, and guide the negotiation. It is not allowed to invent engineering metrics, bypass parameter validation, or silently apply material model changes.
-
-## Runtime Components
+## Runtime Boundary
 
 ```text
-Four-stage browser UI
+Browser
+  ├─ role selection
+  ├─ research-scenario selection
+  ├─ mediated chat
+  ├─ evidence charts and shared state
+  └─ final review and report download
         |
         v
-FastAPI session service
-        |
-        +-- CollaborationSession
-        |     +-- participant roles
-        |     +-- shared ScenarioParameters
-        |     +-- conversation history
-        |     +-- simulation runs
-        |     +-- decision ledger
-        |
-        +-- B2GMediator
-        |     +-- planning pass -> MediatorPlan
-        |     +-- parameter whitelist
-        |     +-- confirmation policy
-        |     +-- response pass -> MediatedReply
-        |     +-- offline fallback
-        |
-        +-- Simulation adapter boundary
-        |     +-- ResidentialCommunitySimulator (implemented)
-        |     +-- legacy EnergyPlus/OpenDSS wrappers (available)
-        |     +-- EnergyPlus-MCP adapter (planned)
-        |     +-- PowerMCP/OpenDSS adapter (planned)
-        |
-        +-- outputs/web_sessions/<session-id>/
-              +-- session.json
-              +-- final_plan.md
+Local FastAPI service
+  ├─ SessionStore
+  │   ├─ selected role and scenario
+  │   ├─ shared ScenarioParameters
+  │   ├─ conversation and decision ledger
+  │   └─ run history
+  ├─ B2GMediator
+  │   ├─ OpenAI planning pass -> validated MediatorPlan
+  │   └─ OpenAI explanation pass -> validated MediatedReply
+  ├─ ResidentialCommunitySimulator
+  │   ├─ residential-renewal equations
+  │   └─ demand-response baseline/event equations
+  └─ local JSON and Markdown artifacts
+
+Future adapter boundary; not active
+  ├─ EnergyPlus-MCP
+  └─ PowerMCP / OpenDSS
 ```
 
-## Two-Pass LLM Design
+The API key is read only by the local Python process. Browser JavaScript never receives it. With `B2G_REQUIRE_LLM=true`, session creation fails when a valid personal key is unavailable rather than silently continuing in fallback mode.
 
-The first pass is a planner. It receives the human role, counterpart role, current shared case, recent conversation, and new message. It must return a `MediatorPlan` JSON object containing:
+## Conversation Control Loop
 
-- interpreted professional intent;
-- counterpart-facing translation;
-- changes limited to the scenario whitelist;
-- building, grid, coupled, or no-simulation scope;
-- assumptions, confidence, and confirmation requirement.
-
-Typed Pydantic models validate this response. Unsupported parameter names or out-of-range values are rejected before execution.
-
-The second pass is an evidence communicator. It receives the validated plan, the current case, and—only if a run occurred—the computed simulation result. It produces separate mediator and counterpart messages. This ordering prevents the LLM from presenting invented numbers as simulation evidence.
+1. The human selects a professional role and research scenario.
+2. The LLM interprets one free-form message into a typed `MediatorPlan`.
+3. Scenario-specific validation rejects unsupported keys or out-of-range values.
+4. Material changes can require explicit confirmation.
+5. Deterministic Python code executes the selected scenario; the LLM does not calculate metrics.
+6. A second LLM pass explains supplied results and speaks for the counterpart.
+7. B2G-Agent records the decision note, parameter state, model run, and provenance.
+8. Finalization ranks candidates and produces a human-review package.
 
 ## Shared Boundary Object
 
-`ScenarioParameters` is the current cross-domain boundary object. Both roles see and modify the same state:
+`ScenarioParameters` is the cross-domain state. Each scenario exposes only a controlled subset.
 
-- cooling setpoint;
-- number of buildings;
-- retrofit level;
-- rooftop PV;
-- demand response;
-- connection bus;
-- transformer capacity;
-- line capacity.
+Residential renewal includes comfort setpoint, building count, retrofit, PV, peak flexibility, connection, transformer, and line capacity.
 
-Each simulation run stores an immutable copy of these inputs with its metrics and hourly timeseries. Conversation messages refer to run identifiers rather than an untracked “current result.”
+Demand-response service includes baseline method, baseline adjustment, participating assets, event window, kW commitment, rebound limit, comfort setpoint, connection, transformer, and line capacity.
 
-## Confirmation Policy
+An LLM response cannot add arbitrary fields because Pydantic rejects unknown schema keys and the scenario validator rejects fields outside the selected scenario.
 
-The LLM may mark an interpretation as requiring confirmation. B2G-Agent then stores the proposed change without applying it. Only a subsequent explicit confirmation executes the change and simulation. The next MCP integration phase should extend this policy with per-tool risk levels:
+## Evidence Models
 
-- read-only inspection: automatic;
-- reversible scenario edit: automatic or configurable;
-- topology, equipment, or broad file modification: explicit confirmation;
-- action outside the scenario root: prohibited.
+The residential-renewal model produces a transparent 24-hour building and feeder profile with voltage and thermal proxies.
 
-## Backend Contract
+The demand-response model separately represents:
 
-A simulation backend must accept validated shared state and return:
+- the counterfactual baseline;
+- event-day building load;
+- target and delivered reduction;
+- baseline-method confidence;
+- post-event rebound;
+- feeder voltage and loading consequences.
 
-- backend identity and run identifier;
-- complete parameter snapshot;
-- hourly load, voltage, and loading evidence;
-- aggregate constraint metrics;
-- convergence or execution status;
-- findings derived from computed values;
-- paths or identifiers sufficient for reproduction.
+These models are intended for workflow research and interface evaluation, not professional engineering or market settlement.
 
-The UI and mediator consume this contract and do not depend on a particular simulator implementation.
+## Confirmation And Safety
+
+- Unknown parameter: rejected.
+- Out-of-range parameter: rejected.
+- Unsupported field for selected scenario: rejected.
+- Material topology or equipment change: confirmation can be required.
+- Missing personal API key: session creation rejected in the documented configuration.
+- Simulator failure: no engineering metric should be asserted.
+- Arbitrary shell execution or path writes from LLM output: prohibited.
+- Final output: a human-review package, never an autonomous operating instruction.
+
+## External Tool Boundary
+
+EnergyPlus-MCP and PowerMCP are cited because they are the intended validated building and grid tool ecosystems. The current repository does not install, import, vendor, start, or call either project. A future adapter is acceptable only after typed capability discovery, run-directory isolation, model diffs, simulator success checks, provenance capture, and regression validation are implemented.

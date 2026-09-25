@@ -8,8 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from b2g_agent import __version__
-from b2g_agent.collaboration.models import EngineerRole
-from b2g_agent.collaboration.scenario import scenario_brief
+from b2g_agent.collaboration.models import EngineerRole, ResearchScenario
+from b2g_agent.collaboration.scenario import scenario_brief, scenario_catalog
 from b2g_agent.collaboration.session import SessionStore
 
 
@@ -18,6 +18,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 class CreateSessionRequest(BaseModel):
     role: EngineerRole
+    scenario_id: ResearchScenario
 
 
 class MessageRequest(BaseModel):
@@ -41,13 +42,20 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
     def health() -> dict[str, object]:
         return {"status": "ok", "service": "B2G-Agent", "version": __version__}
 
-    @app.get("/api/scenario")
-    def get_scenario() -> dict[str, object]:
-        return scenario_brief()
+    @app.get("/api/scenarios")
+    def get_scenarios() -> dict[str, object]:
+        return scenario_catalog()
+
+    @app.get("/api/scenarios/{scenario_id}")
+    def get_scenario(scenario_id: ResearchScenario) -> dict[str, object]:
+        return scenario_brief(scenario_id)
 
     @app.post("/api/sessions")
     def create_session(request: CreateSessionRequest) -> dict[str, object]:
-        session = app.state.sessions.create(request.role)
+        try:
+            session = app.state.sessions.create(request.role, request.scenario_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         return session.snapshot().model_dump(mode="json")
 
     @app.get("/api/sessions/{session_id}")
@@ -62,6 +70,8 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
             result = session.handle_message(request.text)
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         return result.model_dump(mode="json")
 
     @app.post("/api/sessions/{session_id}/simulate")

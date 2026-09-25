@@ -10,8 +10,3 @@ __pycache__/
 htmlcov/
 outputs/
 artifacts/
-samples/**/outputs/*
-samples/**/outputs/**/*
-!samples/**/outputs/
-!samples/**/outputs/**/
-!samples/**/outputs/**/.gitkeep

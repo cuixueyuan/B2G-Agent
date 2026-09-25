@@ -55,3 +55,37 @@ def test_session_records_mediated_evidence_and_final_plan(tmp_path: Path) -> Non
     assert "OPENAI_API_KEY" not in final.report_markdown
     assert (tmp_path / session.session_id / "session.json").exists()
     assert (tmp_path / session.session_id / "final_plan.md").exists()
+
+
+class DemandResponseMediator(FakeMediator):
+    def plan_turn(self, **_kwargs):  # type: ignore[no-untyped-def]
+        return MediatorPlan(
+            intent="simulate",
+            interpreted_intent="Confirm a weather-adjusted baseline and 0.8 kW commitment.",
+            translation_for_counterpart="Evaluate baseline credibility, delivery, and rebound.",
+            requested_changes={
+                "baseline_method": "weather_adjusted",
+                "dr_target_kw_per_building": 0.8,
+                "max_rebound_pct": 20,
+            },
+            simulation_scope=SimulationScope.COUPLED,
+            confidence=0.99,
+        )
+
+
+def test_demand_response_session_produces_enrollment_evidence(tmp_path: Path) -> None:
+    session = CollaborationSession(
+        user_role="distribution_power_engineer",
+        scenario_id="harborview_demand_response_service",
+        mediator=DemandResponseMediator(),  # type: ignore[arg-type]
+        output_root=tmp_path,
+    )
+
+    result = session.handle_message("Use the weather-adjusted baseline and test 0.8 kW.")
+
+    assert result.simulation_run is not None
+    assert result.simulation_run.metrics.dr_delivery_pct >= 90
+    assert session.snapshot().scenario_id.value == "harborview_demand_response_service"
+    final = session.finalize()
+    assert final.status == "ready"
+    assert "Baseline method" in final.report_markdown

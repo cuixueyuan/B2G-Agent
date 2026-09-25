@@ -32,7 +32,7 @@
         </button>
         <i></i>
         <button class="progress-step" data-step="2" disabled>
-          <span>02</span><em>Project brief</em>
+          <span>02</span><em>Choose scenario</em>
         </button>
         <i></i>
         <button class="progress-step" data-step="3" disabled>
@@ -88,52 +88,55 @@
         </aside>
       </section>
 
-      <section class="stage" id="stage-2" aria-labelledby="brief-heading">
+      <section class="stage" id="stage-2" aria-labelledby="scenario-heading">
         <div class="stage-heading split-heading">
           <div>
-            <p class="eyebrow">Scenario 01 · Residential vertical slice</p>
-            <h1 id="brief-heading">Harborview Residential Renewal</h1>
+            <p class="eyebrow">Research pathway</p>
+            <h1 id="scenario-heading">Choose a co-design scenario.</h1>
           </div>
           <span class="role-badge" id="selected-role-badge">Building Engineer</span>
         </div>
 
-        <div class="brief-grid">
-          <article class="brief-main panel">
-            <div class="city-illustration" aria-hidden="true">
-              <div class="skyline"></div>
-              <div class="power-line"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-            </div>
-            <h2>The joint assignment</h2>
-            <p id="scenario-summary">Loading project context…</p>
-            <div class="baseline-row">
-              <div><span>Homes</span><strong>80</strong></div>
-              <div><span>Connection</span><strong>Bus 8</strong></div>
-              <div><span>Study</span><strong>24 hours</strong></div>
-              <div><span>Voltage floor</span><strong>0.95 p.u.</strong></div>
-            </div>
-          </article>
+        <div class="scenario-options" id="scenario-options"></div>
 
-          <article class="panel mission-panel">
-            <span class="panel-number">Your mission</span>
-            <h2 id="mission-title">Building Engineer</h2>
-            <p id="mission-text"></p>
-            <h3>Your AI counterpart</h3>
-            <p id="counterpart-text"></p>
-          </article>
+        <div class="scenario-detail is-hidden" id="scenario-detail">
+          <div class="selected-scenario-heading">
+            <p class="eyebrow" id="scenario-kicker"></p>
+            <h2 id="brief-heading"></h2>
+          </div>
+          <div class="brief-grid">
+            <article class="brief-main panel">
+              <div class="city-illustration" id="scenario-illustration" aria-hidden="true">
+                <div class="skyline"></div>
+                <div class="power-line"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              </div>
+              <h2>The joint assignment</h2>
+              <p id="scenario-summary">Select a scenario to load its project context.</p>
+              <div class="baseline-row" id="baseline-row"></div>
+            </article>
 
-          <article class="panel constraints-panel">
-            <span class="panel-number">Joint guardrails</span>
-            <ul class="check-list" id="constraint-list"></ul>
-            <div class="model-note">
-              <strong>Evidence boundary</strong>
-              <p id="simulation-note"></p>
-            </div>
-          </article>
+            <article class="panel mission-panel">
+              <span class="panel-number">Your mission</span>
+              <h2 id="mission-title">Building Engineer</h2>
+              <p id="mission-text"></p>
+              <h3>Your AI counterpart</h3>
+              <p id="counterpart-text"></p>
+            </article>
+
+            <article class="panel constraints-panel">
+              <span class="panel-number">Joint guardrails</span>
+              <ul class="check-list" id="constraint-list"></ul>
+              <div class="model-note">
+                <strong>Evidence boundary</strong>
+                <p id="simulation-note"></p>
+              </div>
+            </article>
+          </div>
         </div>
 
         <label class="accept-row">
           <input type="checkbox" id="accept-brief" />
-          <span>I understand the scenario, the AI counterpart, and the simulation boundary.</span>
+          <span>I accept the selected scenario, AI counterpart, and evidence boundary.</span>
         </label>
         <div class="stage-actions">
           <button class="button ghost" data-back="1">← Change role</button>
@@ -145,7 +148,7 @@
         <div class="workspace-header">
           <div>
             <p class="eyebrow">Live mediated session</p>
-            <h1 id="room-heading">Harborview Co-Design Room</h1>
+            <h1 id="room-heading">B2G Co-Design Room</h1>
           </div>
           <div class="workspace-actions">
             <span class="backend-pill" id="backend-pill">Preparing mediator…</span>
@@ -178,14 +181,9 @@
                 <div><span class="panel-number">Shared evidence</span><h2>Latest run</h2></div>
                 <span class="feasibility-badge" id="feasibility-badge">Baseline</span>
               </div>
-              <div class="metric-grid">
-                <div class="metric-card"><span>Min voltage</span><strong id="metric-voltage">—</strong><small>p.u.</small></div>
-                <div class="metric-card"><span>Line loading</span><strong id="metric-line">—</strong><small>max %</small></div>
-                <div class="metric-card"><span>Transformer</span><strong id="metric-transformer">—</strong><small>max %</small></div>
-                <div class="metric-card"><span>Feeder peak</span><strong id="metric-peak">—</strong><small>kW</small></div>
-              </div>
+              <div class="metric-grid" id="metric-grid"></div>
               <canvas id="load-chart" width="600" height="180" aria-label="24-hour feeder load chart"></canvas>
-              <p class="chart-caption">24-hour feeder demand and 0.95 p.u. voltage constraint</p>
+              <p class="chart-caption" id="chart-caption">24-hour shared evidence</p>
             </section>
 
             <section class="panel state-panel">
@@ -222,7 +220,7 @@
             <div class="score-row">
               <div><span>Building satisfaction</span><strong id="building-score">—</strong><i></i></div>
               <div><span>Grid reliability</span><strong id="grid-score">—</strong><i></i></div>
-              <div><span>Indicative capital cost</span><strong id="capital-cost">—</strong></div>
+              <div><span id="third-score-label">Indicative capital cost</span><strong id="capital-cost">—</strong></div>
             </div>
           </article>
 
@@ -242,10 +240,7 @@
             <span class="panel-number">Before approval</span>
             <h2>Unresolved items</h2>
             <ul id="unresolved-items"></ul>
-            <p class="disclaimer">
-              The current vertical slice demonstrates the mediation workflow with a deterministic backend.
-              A professional engineering decision requires validated EnergyPlus and OpenDSS models.
-            </p>
+            <p class="disclaimer" id="final-disclaimer"></p>
           </article>
         </div>
 

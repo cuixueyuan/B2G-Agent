@@ -6,7 +6,8 @@
 - `.env` and `.env.*` are ignored, except for the placeholder `.env.example`.
 - The FastAPI service reads the key server-side. Browser JavaScript never receives it.
 - Session JSON, simulation artifacts, logs, reports, and API responses must not include secrets or authorization headers.
-- Tests use fake mediator clients and never require a real key.
+- Interactive sessions use the tester's own key. With `B2G_REQUIRE_LLM=true`, a missing or placeholder key causes session creation to fail.
+- Tests use fake mediator clients and never consume a real key.
 
 ## LLM Boundary
 

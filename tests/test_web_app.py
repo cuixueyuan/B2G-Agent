@@ -41,7 +41,17 @@ def test_web_vertical_slice_api(tmp_path: Path) -> None:
     assert health.status_code == 200
     assert health.json()["service"] == "B2G-Agent"
 
-    created = client.post("/api/sessions", json={"role": "building_engineer"})
+    scenarios = client.get("/api/scenarios")
+    assert scenarios.status_code == 200
+    assert len(scenarios.json()["scenarios"]) == 2
+
+    created = client.post(
+        "/api/sessions",
+        json={
+            "role": "building_engineer",
+            "scenario_id": "harborview_residential_renewal",
+        },
+    )
     assert created.status_code == 200
     session = created.json()
     assert session["counterpart_role"] == "distribution_power_engineer"
@@ -57,3 +67,24 @@ def test_web_vertical_slice_api(tmp_path: Path) -> None:
     final = client.post(f"/api/sessions/{session['session_id']}/finalize")
     assert final.status_code == 200
     assert "report_markdown" in final.json()
+
+
+def test_web_api_creates_demand_response_session(tmp_path: Path) -> None:
+    store = SessionStore(mediator_factory=FakeMediator, output_root=tmp_path)  # type: ignore[arg-type]
+    client = TestClient(create_app(store))
+
+    brief = client.get("/api/scenarios/harborview_demand_response_service")
+    assert brief.status_code == 200
+    assert "baseline_method" in brief.json()["allowed_parameters"]
+
+    created = client.post(
+        "/api/sessions",
+        json={
+            "role": "distribution_power_engineer",
+            "scenario_id": "harborview_demand_response_service",
+        },
+    )
+    assert created.status_code == 200
+    payload = created.json()
+    assert payload["scenario_id"] == "harborview_demand_response_service"
+    assert payload["runs"][0]["metrics"]["baseline_peak_kw_per_building"] > 0

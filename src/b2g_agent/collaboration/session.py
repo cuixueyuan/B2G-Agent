@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +15,7 @@ from b2g_agent.collaboration.models import (
     FinalPlan,
     MediatedReply,
     MediatorPlan,
+    ResearchScenario,
     ScenarioParameters,
     SessionSnapshot,
     SimulationRun,
@@ -21,9 +23,11 @@ from b2g_agent.collaboration.models import (
     TurnResult,
 )
 from b2g_agent.collaboration.scenario import (
-    SCENARIO_ID,
     counterpart_role,
+    default_parameters,
+    normalize_scenario_id,
     role_label,
+    scenario_title,
     validate_parameter_changes,
 )
 from b2g_agent.collaboration.simulator import ResidentialCommunitySimulator
@@ -38,15 +42,17 @@ class CollaborationSession:
         self,
         *,
         user_role: EngineerRole,
+        scenario_id: ResearchScenario | str = ResearchScenario.RENEWAL,
         mediator: B2GMediator | None = None,
         simulator: ResidentialCommunitySimulator | None = None,
         session_id: str | None = None,
         output_root: Path | None = None,
     ) -> None:
         self.session_id = session_id or uuid4().hex[:12]
+        self.scenario_id = normalize_scenario_id(scenario_id)
         self.user_role = user_role
         self.counterpart_role = counterpart_role(user_role)
-        self.parameters = ScenarioParameters()
+        self.parameters = default_parameters(self.scenario_id)
         self.mediator = mediator or B2GMediator()
         self.simulator = simulator or ResidentialCommunitySimulator()
         self.created_at = _now()
@@ -62,12 +68,14 @@ class CollaborationSession:
             self.parameters,
             trigger="Scenario baseline",
             label="Baseline",
+            scenario_id=self.scenario_id,
         )
         self.runs.append(baseline)
         self._append_message(
             "mediator",
             (
-                f"Welcome to the Harborview co-design room. You are the {role_label(self.user_role)}. "
+                f"Welcome to the {scenario_title(self.scenario_id)} session. "
+                f"You are the {role_label(self.user_role)}. "
                 f"I will mediate with the AI {role_label(self.counterpart_role)}, translate both domains, "
                 "and ground proposed decisions in explicit simulation evidence."
             ),
@@ -93,6 +101,7 @@ class CollaborationSession:
         else:
             plan = self.mediator.plan_turn(
                 text=text,
+                scenario_id=self.scenario_id,
                 user_role=self.user_role,
                 counterpart_role=self.counterpart_role,
                 parameters=self.parameters,
@@ -130,7 +139,11 @@ class CollaborationSession:
         run: SimulationRun | None = None
         if plan.requested_changes:
             try:
-                self.parameters = validate_parameter_changes(self.parameters, plan.requested_changes)
+                self.parameters = validate_parameter_changes(
+                    self.parameters,
+                    plan.requested_changes,
+                    self.scenario_id,
+                )
             except (TypeError, ValueError) as exc:
                 error_message = self._append_message(
                     "mediator",
@@ -151,11 +164,13 @@ class CollaborationSession:
                 self.parameters,
                 trigger=plan.interpreted_intent,
                 scope=plan.simulation_scope,
+                scenario_id=self.scenario_id,
             )
             self.runs.append(run)
 
         reply = self.mediator.compose_reply(
             original_text=text,
+            scenario_id=self.scenario_id,
             user_role=self.user_role,
             counterpart_role=self.counterpart_role,
             parameters=self.parameters,
@@ -177,7 +192,12 @@ class CollaborationSession:
         )
 
     def simulate_current(self, trigger: str = "User requested a coupled rerun") -> SimulationRun:
-        run = self.simulator.run(self.parameters, trigger=trigger, scope=SimulationScope.COUPLED)
+        run = self.simulator.run(
+            self.parameters,
+            trigger=trigger,
+            scope=SimulationScope.COUPLED,
+            scenario_id=self.scenario_id,
+        )
         self.runs.append(run)
         self.decision_ledger.append(
             f"Run {run.run_id}: {'feasible' if run.metrics.feasible else 'needs revision'} manual coupled rerun."
@@ -191,17 +211,8 @@ class CollaborationSession:
         candidates = feasible_runs or self.runs
         selected = max(candidates, key=_run_value)
         status = "ready" if selected.metrics.feasible else "needs_revision"
-        accepted_decisions = [
-            f"Cooling setpoint: {selected.parameters.cooling_setpoint_c:.1f} °C",
-            f"Building program: {selected.parameters.building_count} homes, {selected.parameters.retrofit_level.value} retrofit",
-            f"PV: {selected.parameters.pv_kw_per_building:.1f} kW per building",
-            f"Demand response: {selected.parameters.demand_response_pct:.1f}%",
-            f"Grid connection: {selected.parameters.target_bus}",
-            f"Transformer / line capacity: {selected.parameters.transformer_capacity_kva:.0f} kVA / {selected.parameters.line_capacity_kw:.0f} kW",
-        ]
-        unresolved: list[str] = []
-        if not selected.metrics.feasible:
-            unresolved.append("At least one voltage or thermal hard constraint remains violated.")
+        accepted_decisions = _accepted_decisions(self.scenario_id, selected)
+        unresolved = _unresolved_items(self.scenario_id, selected)
         if selected.metrics.estimated_capital_cost_kusd > 2500:
             unresolved.append("Capital cost exceeds the scenario's indicative review threshold of $2.5M.")
         summary = (
@@ -229,7 +240,7 @@ class CollaborationSession:
             session_id=self.session_id,
             user_role=self.user_role,
             counterpart_role=self.counterpart_role,
-            scenario_id=SCENARIO_ID,
+            scenario_id=self.scenario_id,
             parameters=self.parameters,
             messages=self.messages,
             runs=self.runs,
@@ -283,6 +294,16 @@ class CollaborationSession:
         return message
 
     def _counterpart_intro(self) -> str:
+        if self.scenario_id == ResearchScenario.DEMAND_RESPONSE:
+            if self.counterpart_role == EngineerRole.POWER:
+                return (
+                    "I am the AI Distribution Power Engineer. I will challenge the baseline, verify delivered "
+                    "event reduction, and protect the feeder from unreliable commitments or rebound."
+                )
+            return (
+                "I am the AI Building Engineer. I will explain normal building operation, defend a credible "
+                "baseline, and protect comfort while identifying controllable load."
+            )
         if self.counterpart_role == EngineerRole.POWER:
             return (
                 "I am the AI Distribution Power Engineer. I will protect voltage and equipment margins, "
@@ -314,10 +335,26 @@ class SessionStore:
         self._mediator_factory = mediator_factory
         self._output_root = output_root
 
-    def create(self, role: EngineerRole) -> CollaborationSession:
+    def create(
+        self,
+        role: EngineerRole,
+        scenario_id: ResearchScenario | str = ResearchScenario.RENEWAL,
+    ) -> CollaborationSession:
+        mediator = self._mediator_factory()
+        require_llm = os.getenv("B2G_REQUIRE_LLM", "true").strip().lower() not in {
+            "0",
+            "false",
+            "no",
+        }
+        if require_llm and not mediator.configured:
+            raise RuntimeError(
+                "A personal OpenAI API key is required. Set OPENAI_API_KEY and "
+                "B2G_LLM_ENABLED=true in .env, then restart b2g-web."
+            )
         session = CollaborationSession(
             user_role=role,
-            mediator=self._mediator_factory(),
+            scenario_id=scenario_id,
+            mediator=mediator,
             output_root=self._output_root,
         )
         with self._lock:
@@ -343,6 +380,57 @@ def _run_value(run: SimulationRun) -> float:
     )
 
 
+def _accepted_decisions(
+    scenario_id: ResearchScenario,
+    selected: SimulationRun,
+) -> list[str]:
+    parameters = selected.parameters
+    if scenario_id == ResearchScenario.DEMAND_RESPONSE:
+        return [
+            f"Baseline method: {parameters.baseline_method.value}",
+            f"Baseline adjustment: {parameters.baseline_adjustment_pct:+.1f}%",
+            f"Participating assets: {parameters.building_count}",
+            (
+                f"Event window: {parameters.dr_event_start_hour:02d}:00 for "
+                f"{parameters.dr_event_duration_hours} hour(s)"
+            ),
+            f"Committed reduction: {parameters.dr_target_kw_per_building:.2f} kW per building",
+            f"Maximum rebound: {parameters.max_rebound_pct:.1f}% of target",
+            f"Grid connection: {parameters.target_bus}",
+        ]
+    return [
+        f"Cooling setpoint: {parameters.cooling_setpoint_c:.1f} °C",
+        f"Building program: {parameters.building_count} homes, {parameters.retrofit_level.value} retrofit",
+        f"PV: {parameters.pv_kw_per_building:.1f} kW per building",
+        f"Demand response: {parameters.demand_response_pct:.1f}%",
+        f"Grid connection: {parameters.target_bus}",
+        (
+            f"Transformer / line capacity: {parameters.transformer_capacity_kva:.0f} kVA / "
+            f"{parameters.line_capacity_kw:.0f} kW"
+        ),
+    ]
+
+
+def _unresolved_items(
+    scenario_id: ResearchScenario,
+    selected: SimulationRun,
+) -> list[str]:
+    metrics = selected.metrics
+    unresolved: list[str] = []
+    if scenario_id == ResearchScenario.DEMAND_RESPONSE:
+        if metrics.baseline_confidence_score < 80.0:
+            unresolved.append("Baseline confidence is below the 80/100 enrollment threshold.")
+        if metrics.dr_delivery_pct < 90.0:
+            unresolved.append("Delivered reduction is below 90% of the committed target.")
+        if metrics.rebound_pct > selected.parameters.max_rebound_pct:
+            unresolved.append("Post-event rebound exceeds the agreed limit.")
+        if metrics.voltage_violation_hours or metrics.line_overload_hours or metrics.transformer_overload_hours:
+            unresolved.append("At least one grid operating constraint remains violated.")
+    elif not metrics.feasible:
+        unresolved.append("At least one voltage or thermal hard constraint remains violated.")
+    return unresolved
+
+
 def _build_report(
     session: CollaborationSession,
     selected: SimulationRun,
@@ -352,13 +440,14 @@ def _build_report(
 ) -> str:
     metrics = selected.metrics
     lines = [
-        "# B2G-Agent Harborview Final Plan",
+        f"# B2G-Agent Final Plan: {scenario_title(session.scenario_id)}",
         "",
         f"- Session: `{session.session_id}`",
         f"- Selected run: `{selected.run_id}`",
         f"- Review status: **{status}**",
         f"- Human role: {role_label(session.user_role)}",
         f"- AI counterpart: {role_label(session.counterpart_role)}",
+        f"- Research scenario: {session.scenario_id.value}",
         f"- Simulation backend: `{selected.backend}`",
         "",
         "## Agreed Scenario",
@@ -367,13 +456,7 @@ def _build_report(
         "",
         "## Joint Evidence",
         "",
-        f"- Feeder peak: {metrics.feeder_peak_kw:.1f} kW",
-        f"- Minimum voltage: {metrics.minimum_voltage_pu:.3f} p.u.",
-        f"- Maximum line loading: {metrics.maximum_line_loading_pct:.1f}%",
-        f"- Maximum transformer loading: {metrics.maximum_transformer_loading_pct:.1f}%",
-        f"- Estimated capital cost: ${metrics.estimated_capital_cost_kusd:.1f}k",
-        f"- Building satisfaction score: {metrics.building_satisfaction_score:.1f}/100",
-        f"- Grid reliability score: {metrics.grid_reliability_score:.1f}/100",
+        *_report_evidence(session.scenario_id, selected),
         "",
         "## Unresolved Items",
         "",
@@ -382,11 +465,39 @@ def _build_report(
         "## Provenance And Limitation",
         "",
         (
-            "This result was produced by the deterministic Harborview vertical-scenario backend. "
-            "It demonstrates the B2G-Agent mediation and evidence workflow, but it is not a calibrated "
-            "EnergyPlus/OpenDSS engineering study. Professional deployment requires validated models "
-            "through the planned EnergyPlus-MCP and PowerMCP adapters."
+            "This result was produced by a deterministic B2G-Agent research backend. It demonstrates the "
+            "mediation and evidence workflow, but it is not a calibrated EnergyPlus/OpenDSS study or a "
+            "settlement-grade demand-response baseline. EnergyPlus-MCP and PowerMCP are cited integration "
+            "targets and are not called by this release."
         ),
         "",
     ]
     return "\n".join(lines)
+
+
+def _report_evidence(
+    scenario_id: ResearchScenario,
+    selected: SimulationRun,
+) -> list[str]:
+    metrics = selected.metrics
+    common = [
+        f"- Feeder peak: {metrics.feeder_peak_kw:.1f} kW",
+        f"- Minimum voltage: {metrics.minimum_voltage_pu:.3f} p.u.",
+        f"- Maximum line loading: {metrics.maximum_line_loading_pct:.1f}%",
+        f"- Maximum transformer loading: {metrics.maximum_transformer_loading_pct:.1f}%",
+        f"- Building satisfaction score: {metrics.building_satisfaction_score:.1f}/100",
+        f"- Grid reliability score: {metrics.grid_reliability_score:.1f}/100",
+    ]
+    if scenario_id == ResearchScenario.DEMAND_RESPONSE:
+        return [
+            f"- Baseline peak: {metrics.baseline_peak_kw_per_building:.2f} kW per building",
+            f"- Baseline confidence: {metrics.baseline_confidence_score:.1f}/100",
+            f"- Delivered reduction: {metrics.delivered_reduction_kw_per_building:.2f} kW per building",
+            f"- Delivery performance: {metrics.dr_delivery_pct:.1f}% of commitment",
+            f"- Post-event rebound: {metrics.rebound_pct:.1f}% of target",
+            *common,
+        ]
+    return [
+        *common,
+        f"- Estimated capital cost: ${metrics.estimated_capital_cost_kusd:.1f}k",
+    ]
