@@ -89,6 +89,22 @@ Omit `--execute` to prepare the selection without inference or simulation. With 
 
 Fresh results may differ because of API/model availability, service-side updates, stochastic generation, timing, software versions, and execution environment. Temperature zero and a seed do not guarantee identical cloud responses. Distributed source includes post-acquisition maintenance and publication support; captured acquisition snapshots provide provenance. Redaction changes request bytes, so exact-hash replay of published traces is not guaranteed; use the recorded-results verification route above to inspect the reported study.
 
+### Results
+
+These figures summarize the final five-method benchmark, with 200 tasks repeated three times per method. The agent panels compare Proposed with the corresponding ablation. Metric definitions and denominators are given in the [evaluation protocol](B2G-Agent/docs/evaluation-protocol.md); exact values are available in the [reported matrix](B2G-Agent/results/reported_metrics.csv). Click a preview to open the original PDF.
+
+#### Quality components
+
+[![Quality components across the five methods](B2G-Agent/results/figures/Fig-Quality_components.png)](B2G-Agent/results/figures/Fig-Quality_components.pdf)
+
+#### Overall quality
+
+[![Overall quality and task success across the five methods](B2G-Agent/results/figures/Fig-Quality_overall.png)](B2G-Agent/results/figures/Fig-Quality_overall.pdf)
+
+#### Agent performance
+
+[![Translator, Actor, and Reviewer performance](B2G-Agent/results/figures/Fig-Agent_performance.png)](B2G-Agent/results/figures/Fig-Agent_performance.pdf)
+
 ## Critical file description
 
 | Path | Purpose |
