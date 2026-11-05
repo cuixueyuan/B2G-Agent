@@ -29,9 +29,9 @@ Download packages and `release_manifest.json` from [Google Drive](https://drive.
 | `b2g-input-data.zip` | `.local-data/`: weather, transitioned building models, load/price/reserve/PV profiles, calibrated thermal/grid models, knowledge-source snapshots, and the pinned local embedding model |
 | `b2g-proposed.zip` | Proposed-method requests, responses, journals, scores, captured source snapshots, and physical evidence |
 | `b2g-baseline.zip` | Baseline records and physical evidence |
-| `b2g-ablation-translator.zip` | Final Translator v2 records, retained recovery attempts, and physical evidence |
-| `b2g-ablation-actor.zip` | Final Actor v2 records and physical evidence |
-| `b2g-ablation-reviewer.zip` | Final Reviewer v4 records and physical evidence |
+| `b2g-ablation-translator.zip` | Final Translator records, retained recovery attempts, and physical evidence |
+| `b2g-ablation-actor.zip` | Final Actor records and physical evidence |
+| `b2g-ablation-reviewer.zip` | Final Reviewer records and physical evidence |
 | `b2g-results.zip` | Final comparison, metric provenance, and Reviewer feedback audit |
 | `b2g-publication.zip` | File inventory, original/published hash mappings, and redaction notes |
 
@@ -136,3 +136,5 @@ Set your API key in `.env` before starting. **API mode** switches between Offlin
 The interface supports the fixed IEEE 33-bus/ten-building case, prepared operating days, 15-minute resolution, seven implemented service families and their supported combinations. Free-form wording does not make arbitrary networks, new building models, unsupported services, or external data sources executable. Correction budgets are bounded; requests can require clarification or end blocked. Results are local simulations, not live equipment control, field measurements, or market settlement.
 
 This is a local research interface without production multi-user authentication, deployment isolation, or field-device connectors; retain the default loopback binding. API and simulator failures are possible. Personal memory remains separate from benchmark memory. Future development will extend case configuration, tool/service coverage, execution recovery, interface guidance, and deployment capabilities.
+
+
