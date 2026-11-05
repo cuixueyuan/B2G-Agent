@@ -1,232 +1,138 @@
 # B2G-Agent
 
-**An LLM-mediated research environment for building-grid co-design.**
+B2G-Agent is a research toolkit and local browser interface for building-grid interactions. A Translator interprets messages, an Actor plans tool execution, and a Reviewer checks contracts and evidence and requests corrections. The study uses an IEEE 33-bus feeder, ten building energy managers, 15-minute intervals, and 200 fixed tasks repeated three times for each of five methods.
 
-B2G-Agent helps Building Engineers and Distribution Power Engineers collaborate without requiring either person to master the other discipline's terminology or simulation workflow. A human selects one role, an LLM plays the other role as an AI counterpart, and B2G-Agent interprets free-form input, translates professional implications, runs a transparent scenario model, and records the path to a joint plan.
+## Requirements
 
-![B2G-Agent concept: an AI mediator connecting building and power engineers](docs/assets/b2g-agent-concept.png)
+- **Python 3.12, 64-bit**, with pip and venv; checked with Python 3.12.14. [Python downloads](https://www.python.org/downloads/).
+- **EnergyPlus 23.1.0** for physical simulation. Install the appropriate package from the [official release](https://github.com/NatLabRockies/EnergyPlus/releases/tag/v23.1.0). The supplied models are already transitioned to this version.
+- The pinned packages in [pyproject.toml](B2G-Agent/pyproject.toml), including pandapower, the numerical stack, local embedding dependencies, FastAPI, and the LLM client. Node.js is not required.
+- A browser and, for fresh live experiments, your own API key and access to the configured model. Archived-results verification does not require an API key.
+- At least **100 GB** free to extract the complete study, plus space for new runs. The interface and fresh experiments initially require only the smaller input-data package.
 
-## Core Functions
-
-B2G-Agent is designed as the third participant in a Building Engineer–Power Engineer dialogue: translator, software operator, conversation governor, and technical secretary. Its main functions are:
-
-### 1. Cross-Domain Professional Translation
-
-- **Language translation:** explain building terminology in the power engineer's decision context, and power-system terminology in the building engineer's decision context.
-- **Model translation:** convert free-form professional opinions into a typed, validated shared case instead of requiring either engineer to edit simulation inputs manually.
-- **Impact translation:** turn model evidence into consequences the other engineer can act on—for example, translating a comfort or controls proposal into load, voltage, capacity, delivery, or rebound implications.
-
-### 2. Natural-Language Software Delegation
-
-Engineers state goals, constraints, and proposed changes in natural language. The LLM converts each message into a validated action plan and asks for clarification or confirmation when needed. Engineering metrics come only from deterministic calculations.
-
-### 3. Evidence And Tool Orchestration
-
-B2G-Agent selects building-side, grid-side, or coupled analysis and explains the result to both roles. The current release runs built-in deterministic models; EnergyPlus-MCP and PowerMCP/OpenDSS are planned adapters and are not yet called.
-
-### 4. Traceability And Human Approval
-
-Each session saves the shared case, conversation, model runs, decision ledger, constraint checks, and final report. Human engineers retain final approval; results are not presented as calibrated EnergyPlus/OpenDSS studies or settlement-grade baselines.
-
-## Research Scenarios
-
-The local application now provides two selectable scenarios:
-
-### 1. Distribution Grid Upgrade
-
-The two engineers coordinate an 80-home expansion and retrofit program. They negotiate comfort, retrofit level, rooftop PV, peak flexibility, connection location, transformer capacity, and feeder capacity while checking voltage and thermal limits.
-
-### 2. Demand Response Service
-
-The two engineers prepare a civic building for a utility demand-response service. They must agree on:
-
-- a defensible counterfactual baseline method;
-- any justified baseline adjustment;
-- the event start time and duration;
-- a realistic kW reduction commitment per building;
-- comfort and controllable-load implications;
-- post-event rebound limits;
-- measurable delivery and feeder benefit.
-
-The deterministic research backend reports baseline peak, baseline confidence, delivered reduction, delivery percentage, rebound, voltage, and equipment loading. It is not a settlement-grade baseline or calibrated building-controls model.
-
-## Four-Stage Interface
-
-1. Choose to participate as the Building Engineer or Distribution Power Engineer.
-2. Choose one of the two research scenarios and review its responsibilities and evidence boundary.
-3. Negotiate with the AI counterpart in the mediated co-design room.
-4. Review the selected candidate, constraint checks, unresolved items, and reproducible Markdown report.
-
-Pages 3 and 4 provide a clear return path to page 1, so a tester can start a fresh session with a different role or scenario. Completed session artifacts remain saved locally.
-
-| 1. Choose an engineering role | 2. Choose and review a scenario |
-|---|---|
-| ![Choose between Building Engineer and Distribution Power Engineer](docs/assets/screenshots/01-role-selection.png) | ![Choose between the distribution-grid-upgrade and demand-response scenarios](docs/assets/screenshots/02-project-brief.png) |
-
-| 3. Enter the co-design room | 4. Review the joint plan |
-|---|---|
-| ![Three-way co-design room with shared demand-response evidence](docs/assets/screenshots/03-codesign-room.png) | ![Final decision package and demand-response acceptance checks](docs/assets/screenshots/04-final-review.png) |
-
-## Local Installation With Your Own API Key
-
-Python 3.11 or newer and Git are required. Every interactive session requires the tester's own OpenAI API key; B2G-Agent will refuse to create a session when the key is missing or still contains the example placeholder.
-
-### Windows PowerShell
+The commands below describe the tested Windows/PowerShell workflow; other operating systems have not been validated for the complete case. Prefer a short checkout path on Windows because physical simulation creates deeply nested files. From the `B2G-Agent` directory:
 
 ```powershell
-git clone https://github.com/cuixueyuan/B2G-Agent.git
-Set-Location B2G-Agent
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev,simulation,retrieval]"
 Copy-Item .env.example .env
-notepad .env
 ```
 
-### macOS or Linux
+Edit the Git-ignored `.env`: set `OPENAI_API_KEY` to your own key, `B2G_ENERGYPLUS_EXE` to your EnergyPlus executable, and keep `B2G_DATA_ROOT=.local-data` for the supplied layout. Credentials are read by the local server, not entered in the browser. Never commit the populated file. The recorded study uses `gpt-6-luna` with `reasoning_effort=none`; access to that model is required to attempt the same live configuration. Substituting another model constitutes a different experiment.
 
-```bash
-git clone https://github.com/cuixueyuan/B2G-Agent.git
-cd B2G-Agent
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
-cp .env.example .env
+## Data
+
+Download packages and `release_manifest.json` from [Google Drive](https://drive.google.com/drive/folders/1qjqdioVLz8TaIZ21DyTY-DaEg0iaApLH). The author uploads these prepared packages separately from GitHub.
+
+| Package | Contents |
+| --- | --- |
+| `b2g-input-data.zip` | `.local-data/`: weather, transitioned building models, load/price/reserve/PV profiles, calibrated thermal/grid models, knowledge-source snapshots, and the pinned local embedding model |
+| `b2g-proposed.zip` | Proposed-method requests, responses, journals, scores, captured source snapshots, and physical evidence |
+| `b2g-baseline.zip` | Baseline records and physical evidence |
+| `b2g-ablation-translator.zip` | Final Translator v2 records, retained recovery attempts, and physical evidence |
+| `b2g-ablation-actor.zip` | Final Actor v2 records and physical evidence |
+| `b2g-ablation-reviewer.zip` | Final Reviewer v4 records and physical evidence |
+| `b2g-results.zip` | Final comparison, metric provenance, and Reviewer feedback audit |
+| `b2g-publication.zip` | File inventory, original/published hash mappings, and redaction notes |
+
+For new experiments or interface deployment, restore the inputs:
+
+```powershell
+.\.venv\Scripts\python.exe -B experiments\restore_release.py --archive-dir "<download-directory>" --include inputs
 ```
 
-Edit `.env` and replace the placeholder with your own key:
+The helper verifies archive hashes and refuses to overwrite differing existing files. Use `--include all` in a separate checkout for the complete recorded study. The large `outputs/` tree is unnecessary for starting fresh experiments. GitHub already includes the small case definitions, all 200 tasks, reference answers, five protocols, frozen Reviewer memory, and knowledge records. See [data acquisition](B2G-Agent/docs/data-acquisition.md) for upstream sources and preparation scripts.
 
-```dotenv
-OPENAI_API_KEY=replace_with_your_actual_api_key
-B2G_MODEL=gpt-4.1-mini
-B2G_LLM_ENABLED=true
-B2G_REQUIRE_LLM=true
+Drive records are **privacy-redacted copies**: personal paths and detected credentials are removed, including inside captured source archives. Numerical results and the final metric matrix are retained. Historical hash claims are explicitly paired with published hashes; the release is not claimed to contain byte-identical acquisition files. See [publication notes](B2G-Agent/docs/publication.md). Private interface conversations and learned personal memory are excluded.
+
+## Experiments
+
+### Methods and metrics
+
+The small [reported matrix](B2G-Agent/results/reported_metrics.csv) is also included here for inspection.
+
+| Method | Runner ID | Tasks x repeats |
+| --- | --- | ---: |
+| Proposed | `full_multi_agent` | 200 x 3 |
+| Baseline | `same_llm_single_agent` | 200 x 3 |
+| Ablation-Translator | `plain_translator` | 200 x 3 |
+| Ablation-Actor | `unstructured_actor` | 200 x 3 |
+| Ablation-Reviewer | `reviewer_no_feedback` | 200 x 3 |
+
+Each ablation changes only its named agent implementation; resulting trajectories can still differ. The final vocabulary has 18 indicators: six quality, nine agent-performance, and three whole-system cost measures. Proposed has 18 applicable values, baseline nine, and each ablation 12. Non-target metrics are absent, not zero. Reviewer measures appropriate first handling, executable-task reverse-review reach, and executable-task success. These post-acquisition measures describe workflow effects rather than isolated diagnosis. See [evaluation protocol](B2G-Agent/docs/evaluation-protocol.md) and [ablation definitions](B2G-Agent/docs/ablation-evaluation.md).
+
+### Reproduction
+
+**Verify the reported experiment without new API calls.** Restore all packages in a separate checkout:
+
+```powershell
+.\.venv\Scripts\python.exe -B experiments\restore_release.py --archive-dir "<download-directory>" --include all
+.\.venv\Scripts\python.exe -B experiments\verify_retained_layout.py
+.\.venv\Scripts\python.exe -B experiments\reassess_reviewer_feedback_harms.py
+.\.venv\Scripts\python.exe -B experiments\finalize_selected_reports.py
 ```
 
-Start the local application:
+The verifier checks the five cohorts, journals, captured archives, and evidence using publication hash mappings. The Reviewer command recomputes its audit from recorded interactions. The finalizer validates that audit and republishes the approved matrix; it does not independently recompute every quality/cost value. Read `outputs/comparison/final/metrics.csv` and each method's `FINAL_METRICS.*`. The complete execution process, including intermediate failures and corrections, is available in Google Drive.
 
-```text
-b2g-web
+**Run the experiment again.** Use a clean checkout with only input data restored and configure your API key and EnergyPlus path:
+
+```powershell
+.\.venv\Scripts\python.exe -B experiments\validate_case.py --require-physics --require-publishable
+.\.venv\Scripts\python.exe -B experiments\prepare_embedding_model.py --verify-only
+.\.venv\Scripts\python.exe -B experiments\preflight_evaluation.py --mode live
+.\.venv\Scripts\python.exe -B experiments\run_proposed_suite.py --method full_multi_agent --execute
+.\.venv\Scripts\python.exe -B experiments\run_proposed_suite.py --method same_llm_single_agent --execute
+.\.venv\Scripts\python.exe -B experiments\run_mechanism_ablations.py --execute
 ```
 
-Open <http://127.0.0.1:8000>. The co-design room should display `LLM mediator · gpt-4.1-mini`. If session creation reports that an API key is required, stop the process with `Ctrl+C`, correct `.env`, and restart it.
+Omit `--execute` to prepare the selection without inference or simulation. With it, API calls incur charges. The last command executes the ablation groups sequentially; `--workers 1` limits each group to one worker. Each method has 600 attempts. Runners refuse to overwrite an existing canonical method directory, so keep restored historical outputs in a separate checkout. After ablation acquisition, run `report_proposed_suite.py --suite` with each method directory to calculate its report. Failed outcomes remain in the denominator.
 
-The real `.env` is ignored by Git. Never paste the key into browser JavaScript, source files, screenshots, issues, or commits. See the [complete local deployment guide](docs/local-deployment.md) for verification and troubleshooting.
+Fresh results may differ because of API/model availability, service-side updates, stochastic generation, timing, software versions, and execution environment. Temperature zero and a seed do not guarantee identical cloud responses. Distributed source includes post-acquisition maintenance and publication support; captured acquisition snapshots provide provenance. Redaction changes request bytes, so exact-hash replay of published traces is not guaranteed; use the recorded-results verification route above to inspect the reported study.
 
-## Interaction Model
+## Critical file description
 
-```text
-Free-form engineer message
-        ↓
-Role- and scenario-aware LLM interpretation
-        ↓
-Validated parameter/action schema ──→ clarification or confirmation
-        ↓
-Scenario-specific evidence execution
-        ↓
-Audience-specific translation + AI counterpart response
-        ↓
-Decision ledger → candidate comparison → final human review
+| Path | Purpose |
+| --- | --- |
+| `src/b2g_agent/agents/` | Agents, retrieval, baseline, and final ablations |
+| `src/b2g_agent/contracts/` | Typed task, plan, review, and evidence contracts |
+| `src/b2g_agent/orchestration/` | Exchanges, correction loops, and tool execution |
+| `src/b2g_agent/simulation/` | EnergyPlus/pandapower adapters and optimization |
+| `src/b2g_agent/evaluation/` | Quality, agent and cost metrics, protocols, caches |
+| `cases/ieee33_10bem_15min/` | Frozen case, tasks, splits, oracles, memory, protocols |
+| `knowledge/` | Domain knowledge, retrieval configuration, source references |
+| `experiments/` | Data preparation, reference generation, acquisition, scoring, reporting, verification |
+| `tests/` | Offline regressions without live API calls or workstation simulators |
+| `src/b2g_agent/web/`, `start_personal.py` | Browser interface and launcher |
+| `src/b2g_agent/artifact_paths.py`, `publication.py` | Relocated-path lookup and publication hash validation |
+
+The complete preparation chain remains under `experiments/`, documented in [data acquisition](B2G-Agent/docs/data-acquisition.md). Use the frozen input package first: regenerating tasks, target days, calibration, or reference answers changes the benchmark.
+
+## Interface
+
+![B2G-Agent local interface](B2G-Agent/Interface.png)
+
+### Local setup
+
+Complete Requirements and restore the input-data package. Historical outputs and the author's Personal-workspace are unnecessary. Start the local server:
+
+```powershell
+.\.venv\Scripts\python.exe -B start_personal.py --host 127.0.0.1 --port 8000
 ```
 
-The LLM interprets intent and writes explanations; deterministic code validates parameter names and ranges, executes the scenario equations, and calculates engineering metrics. The LLM is not allowed to invent simulation results.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). Startup builds the local retrieval index and can take several minutes. The application creates a sibling `Personal-workspace/` for your settings, sessions, API records, journals, physics, and optional memory. The supplied template contains no author history and is optional; runtime files are created automatically.
 
-## Tool And Attribution Status
+Set your API key in `.env` before starting. **API mode** switches between Offline, Live API, and Replay for new sessions; existing sessions retain their original mode. Offline uses local rules and is not the paper's LLM method. Replay requires matching personal saved responses. Physical simulation requires EnergyPlus and input data in every interpretation mode.
 
-This table distinguishes software that the current release actually executes from tools that are cited as future integration targets.
+### Usage instruction
 
-| Tool or project | Current status in B2G-Agent | Purpose |
-|---|---|---|
-| [OpenAI Python SDK](https://github.com/openai/openai-python) | **Used** | Calls the tester-selected OpenAI model from the local Python server. |
-| [FastAPI](https://github.com/fastapi/fastapi) | **Used** | Provides the local HTTP API and serves the browser interface. |
-| [Uvicorn](https://github.com/encode/uvicorn) | **Used** | Runs the local ASGI service started by `b2g-web`. |
-| [Pydantic](https://github.com/pydantic/pydantic) | **Used** | Validates LLM plans, scenario parameters, sessions, and reports. |
-| [python-dotenv](https://github.com/theskumar/python-dotenv) | **Used** | Loads the tester's local `.env` without exposing it to the browser. |
-| [EnergyPlus-MCP](https://github.com/LBNL-ETA/EnergyPlus-MCP) | **Cited; not integrated** | Planned EnergyPlus model inspection, modification, execution, and result extraction. It is not installed, imported, or called by this release. |
-| [PowerMCP](https://github.com/Power-Agent/PowerMCP) from the Power-Agent project | **Cited; not integrated** | Planned OpenDSS and power-system tool orchestration. It is not installed, imported, or called by this release. |
-| EnergyPlus and OpenDSS | **Not executed** | Future validated physics backends. Current metrics come from B2G-Agent's transparent deterministic research equations. |
+1. Choose **DNO** or **BEM**. Select **Interactive** for multiple turns or **Benchmark** for a private one-exchange rehearsal.
+2. Optionally choose a task family and episode seed, then **Start conversation**. Unseeded interactive sessions accept supported requests in your own wording.
+3. Specify the building/bus, operating day, time window, service quantity, and constraints. Use the offered examples, then **Send request**. Supply missing information when clarification is requested.
+4. Inspect **Exchange**, **Task**, **Plan**, and **Review** in **Trace & evidence**. When eligible, choose **Run physics**. A manual receiver reply can be recorded, but physical-output claims still require validation before release.
+5. Inspect **Physics** and the final review. In Interactive mode, continue with another message; use the turn selector to revisit earlier exchanges. Interface runs never enter the formal experiment cohorts.
 
-External projects retain their own licenses and attribution. No EnergyPlus-MCP or PowerMCP source code is vendored into this repository.
+### Limitations
 
-## Architecture
+The interface supports the fixed IEEE 33-bus/ten-building case, prepared operating days, 15-minute resolution, seven implemented service families and their supported combinations. Free-form wording does not make arbitrary networks, new building models, unsupported services, or external data sources executable. Correction budgets are bounded; requests can require clarification or end blocked. Results are local simulations, not live equipment control, field measurements, or market settlement.
 
-```text
-Browser interface
-  └─ Local FastAPI service
-      ├─ Role + research-scenario selection
-      ├─ OpenAI-based mediator and AI counterpart
-      ├─ Typed shared case state
-      ├─ Distribution-grid-upgrade research model
-      ├─ Demand-response baseline and event model
-      ├─ Decision ledger and candidate selection
-      └─ Reproducible Markdown report
-
-Planned adapters, not active in this release
-  ├─ EnergyPlus-MCP
-  └─ PowerMCP / OpenDSS
-```
-
-See [architecture.md](docs/architecture.md), [research-scenarios.md](docs/vertical-scenario.md), [capability-matrix.md](docs/capability-matrix.md), and [security.md](docs/security.md).
-
-## API Endpoints
-
-- `GET /api/health` — local service status.
-- `GET /api/scenarios` — role information and two-scenario catalog.
-- `GET /api/scenarios/{scenario_id}` — selected scenario brief and decision space.
-- `POST /api/sessions` — create a role- and scenario-aware session.
-- `POST /api/sessions/{id}/messages` — mediate one free-form turn.
-- `POST /api/sessions/{id}/simulate` — rerun the current shared case.
-- `POST /api/sessions/{id}/finalize` — select and report the best available candidate.
-
-Interactive API documentation is available at `/docs` while the local service is running.
-
-## Testing
-
-Tests use fake mediator objects and never require a real API key:
-
-```text
-python -m pytest -q
-```
-
-The suite covers both scenario models, parameter validation, mediated sessions, final reports, API routes, and secret-safe configuration.
-
-## Repository Layout
-
-```text
-src/b2g_agent/
-  collaboration/       # roles, scenarios, LLM mediator, simulation, and sessions
-  web/                 # FastAPI service and four-stage browser interface
-docs/                  # architecture, capabilities, security, screenshots, and setup
-tests/                 # deterministic unit and API tests
-```
-
-The earlier `single-building-to-grid` and `building-cluster-to-grid` samples and their dedicated workflow code were removed in v0.3.0 because they were not part of the current mediated collaboration product.
-
-## Research Boundary And Roadmap
-
-The included equations are auditable workflow surrogates, not professional planning, settlement, or operational models. Human engineers retain approval responsibility.
-
-Next validation stages:
-
-- connect thermostat, schedules, loads, and event controls through EnergyPlus-MCP;
-- connect feeder compilation, equipment changes, QSTS, and convergence checks through PowerMCP/OpenDSS;
-- compare simulated baselines with interval-meter methods and program settlement rules;
-- add a real two-human collaboration mode;
-- evaluate translation accuracy, tool selection, agreement quality, reproducibility, and professional trust.
-
-## Citation
-
-```bibtex
-@software{b2g_agent,
-  title  = {B2G-Agent: An LLM-Mediated Research Environment for Building--Grid Co-Design},
-  author = {Xueyuan Cui},
-  year   = {2026},
-  url    = {https://github.com/cuixueyuan/B2G-Agent}
-}
-```
-
-## License
-
-Released under the MIT License. External projects are governed by their respective licenses.
+This is a local research interface without production multi-user authentication, deployment isolation, or field-device connectors; retain the default loopback binding. API and simulator failures are possible. Personal memory remains separate from benchmark memory. Future development will extend case configuration, tool/service coverage, execution recovery, interface guidance, and deployment capabilities.
