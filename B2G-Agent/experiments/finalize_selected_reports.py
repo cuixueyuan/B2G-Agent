@@ -59,12 +59,14 @@ def main() -> int:
             if name in REVIEWER:
                 definition, cohort, denominator = REVIEWER[name]
                 datum.update(definition=definition, cohort=cohort, denominator=denominator)
+            elif name == "Q_G":
+                datum.update(definition="Validated-plan original-goal attainment", cohort="source-executable attempts", denominator=300)
             else:
                 datum["definition"] = "See cases/ieee33_10bem_15min/evaluation/scoring.json and final comparison."
             selected.append(datum)
         assert len(selected) == (9 if method == "baseline" else 18 if method == "proposed" else 12)
         payload = {"method": method, "tasks": 200, "repeats": 3, "attempts": 600,
-                   "metric_protocol": "selected-18-feedback-impact-20261103", "metrics": selected,
+                   "metric_protocol": "selected-18-goal-attainment-20261106", "metrics": selected,
                    "comparison": str(COMPARISON / "metrics.csv"), "api_calls": 0, "physics_runs": 0}
         out = suite / "FINAL_METRICS.json"
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

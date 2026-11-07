@@ -101,10 +101,11 @@ def cohort(records):
             "Y": (sum(bool((r["score"] or {}).get("task_success")) for r in records)
                     / len(records)) if records else None,
             "all_attempt_metrics_zero_penalty": {
-                key: stats(float((r["score"] or {}).get(key, 0.0)) for r in records)
+                key: stats(float((r["score"] or {}).get(key) or 0.0) for r in records
+                           if key != "goal_achievement" or r.get("goal_applicable", (r["score"] or {}).get("goal_applicable", True)))
                 for key in METRICS},
             "scored_only_metrics": {
-                key: stats(float(r["score"][key]) for r in records if r["score"] is not None)
+                key: stats(float(r["score"][key]) for r in records if r["score"] is not None and r["score"].get(key) is not None)
                 for key in METRICS}}
 
 
@@ -351,7 +352,7 @@ def aggregate(records, case, suite):
         else:
             for key, threshold in [("semantic_fidelity", scoring["semantic_success_threshold"]), ("actionability", 1.0),
                                    ("physical_feasibility", 1.0), ("goal_achievement", scoring["goal_success_threshold"])]:
-                if float(score[key]) < threshold - 1e-12:
+                if score.get(key) is not None and float(score[key]) < threshold - 1e-12:
                     failed_conditions[key] += 1
             for transfer in ("first_transfer", "second_transfer"):
                 for field, passed in score[transfer].get("field_checks", {}).items():
@@ -416,7 +417,7 @@ def write_report(path, summary):
         f"Workflow outcomes: {json.dumps(cohort.get('workflow_outcomes', {}), sort_keys=True)}; runtime failures: {cohort.get('runtime_failures', 0)}.",
         "Completed processing includes controlled Reviewer blocks. A blocked exchange was not released and is not a successful task.",
         "", "## Interaction quality (6)", "",
-        f"Success requires Q^F >= {scoring['semantic_success_threshold']:g}, Q^A = 1, Q^V = 1 and Q^G >= {scoring['goal_success_threshold']:g}. Q^qua = 25(Q^F+Q^A+Q^V+Q^G). Q^tsr is the successful-attempt fraction.",
+        f"Success requires Q^F >= {scoring['semantic_success_threshold']:g}, Q^A = 1, Q^V = 1 and Q^G >= {scoring['goal_success_threshold']:g}. Q^G applies only to source-executable tasks. Q^qua is 100 times the mean of applicable components (three for clarification, four otherwise). Q^tsr is the successful-attempt fraction.",
         "Unscored attempts receive an explicit zero aggregation penalty; absent fields are not claimed to be observed zeros.",
         "", "| Symbol | Value | Standard deviation | Attempts |", "| --- | ---: | ---: | ---: |"]
     for row in rows:
@@ -569,7 +570,14 @@ def main():
                     groundtruth=case.get_groundtruth(row["episode_id"]),
                     candidate=PipelineResult.model_validate(result),
                     numeric_oracle=load(numeric_path) if numeric_path.exists() else None).model_dump(mode="json")
-            record = {"row": row, "score": score, "journal": journal, "result": result}
+            from b2g_agent.artifact_paths import current_score_path
+            selected_score = current_score_path(run_root, run_id)
+            if selected_score is not None:
+                score = load(selected_score)
+            row = dict(row, interaction_quality=(score or {}).get("interaction_quality", 0.0),
+                       task_success=bool((score or {}).get("task_success")))
+            record = {"row": row, "score": score, "journal": journal, "result": result,
+                      "goal_applicable": case.get_groundtruth(row["episode_id"]).perfect_execution.route != "clarify_sender"}
             observed_tokens = sum(int(c["usage"].get("total_tokens") or 0) for c in calls)
             if observed_tokens != int(row.get("total_tokens") or 0):
                 record["original_index_usage"] = {k: row.get(k) for k in ("total_tokens", "prompt_tokens", "completion_tokens", "llm_latency_seconds", "per_agent_llm_usage")}
@@ -591,6 +599,8 @@ def main():
             records.append(record)
             write_json(directory / "record.json", {
                 "run_id": run_id, "index_row": row, "score": score,
+                "scoring_configuration": scorer.config,
+                "score_scope": "selected scoring protocol; acquired evidence unchanged",
                 "audited_usage_row": record["row"] if "original_index_usage" in record else None,
                 "source_journal": str(journal_path), "source_journal_sha256": digest(journal_path),
                 "manifest": str(run_root / "manifests" / f"{run_id}.json"),

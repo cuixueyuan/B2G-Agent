@@ -6,7 +6,7 @@ import statistics
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from b2g_agent.artifact_paths import resolve_recorded_path
+from b2g_agent.artifact_paths import resolve_recorded_path, current_score_path
 from typing import Any, Iterable
 
 
@@ -38,7 +38,7 @@ def summarize_evaluation_runs(run_roots: Iterable[Path]) -> dict[str, Any]:
             except json.JSONDecodeError as exc:
                 raise ValueError(f"Invalid JSON at {index_path}:{line_number}") from exc
             method_id = str(row["method_id"])
-            score_path = root / "scores" / f"{row['run_id']}.json"
+            score_path = current_score_path(root, row["run_id"]) or root / "scores" / f"{row['run_id']}.json"
             score = (
                 json.loads(score_path.read_text(encoding="utf-8"))
                 if score_path.is_file()

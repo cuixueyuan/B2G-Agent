@@ -39,7 +39,7 @@ holdout. Three repetitions are not three independent scenarios.
 | Interaction quality | $Q^{\mathrm{F}}$ | Semantic fidelity, formerly F |
 | Interaction quality | $Q^{\mathrm{A}}$ | Actionability and closed-loop completeness, formerly A |
 | Interaction quality | $Q^{\mathrm{V}}$ | Physical safety/feasibility, formerly V |
-| Interaction quality | $Q^{\mathrm{G}}$ | Goal achievement relative to the oracle boundary, formerly G |
+| Interaction quality | $Q^{\mathrm{G}}$ | Validated-plan attainment of the original quantitative request (300 applicable attempts) |
 | Agent performance | $F^{\mathrm{tra}}_1$ | Required semantic-field weighted F1 |
 | Agent performance | $F^{\mathrm{tra}}_2$ | Cross-domain mapping accuracy |
 | Agent performance | $F^{\mathrm{tra}}_3$ | Clarification-decision F1 |
@@ -63,15 +63,48 @@ file writes and physics. Summed parallel-call time is not batch wall time.
 Retrieval timers cover Translator knowledge retrieval and Reviewer memory lookup.
 Missing timing/usage is unavailable, never silently converted into a measured zero.
 
-The current scoring protocol is `interaction-quality-f085-v2`, configured in
-`cases/ieee33_10bem_15min/evaluation/scoring.json`. Success requires
-F >= 0.85, A = 1, V = 1 and G >= 0.9, with
-Q = 25(F+A+V+G). Unscored failures receive an explicit zero aggregation penalty;
-this does not imply their missing components were observed. Numeric ground truth,
-task inputs and the deterministic simulation kernel are unchanged.
-This user-approved threshold revision was adopted after acquisition and applied
-offline to both complete cohorts; it is not a newly run or pre-specified experiment.
-The selected full-200 result is published in `outputs/comparison/final/`. Acquired worker scores and journal-embedded scores are historical evidence; current scores live in each suite's `current_scores/` folder.
+The current scoring protocol is `validated-plan-goal-attainment-20261106`, configured in
+`cases/ieee33_10bem_15min/evaluation/scoring.json` and implemented in
+`src/b2g_agent/evaluation/goal_attainment.py`.
+
+For the fixed 100 source-executable tasks (300 runs), G measures fulfillment of
+the original requested amount by a validated simulated plan. It uses the original
+scope, target and time windows, never a revised counteroffer or optimized oracle
+as its denominator. Evidence must converge and satisfy hard constraints. Within
+each original 15-minute interval, clip signed achieved power / requested power to
+[0,1], then average. Peak shaving additionally requires peak-reduction fulfillment;
+market trading additionally requires settlement of the original offer. Flexibility
+uses the weaker validated direction / original symmetric offer. Composite tasks
+use normalized inverse-priority weights. Voltage and congestion tasks measure
+fulfillment of their requested dispatch; their zero-violation baselines do not
+support a claim of violation removal. V retains the physical compliance checks.
+
+G does not require final release: a blocked but validated plan can receive partial
+G. This is a plan-outcome metric, not evidence of external delivery. A still
+requires the appropriate complete interaction and therefore prevents a blocked
+candidate from becoming successful.
+
+For the fixed 100 source-required clarification tasks (300 runs), G is N/A,
+regardless of the method's own routing decision. Their quality is 100(F+A+V)/3;
+executable quality is 25(F+A+V+G). Success requires F >= 0.85, A = V = 1, plus
+G >= 0.90 where applicable. G averages all 300 applicable runs, including failed
+runs with zero credit; quality and success average all 600 scheduled runs.
+Unscored failures receive zero quality and success, not an observed measurement.
+F/A/V definitions, inputs, physical evidence and simulation outputs are unchanged.
+
+This metric revision was selected after acquisition and computed offline for all
+five methods. It is not a new experiment or a preregistered endpoint. The selected
+full-200 result is in `outputs/comparison/final/`. Public acquisition worker scores and
+journal-embedded scores retain historical values with declared privacy redactions; only each method's
+`current_scores/` and final reports contain the selected scores. Rebuild these
+without API calls or simulation with:
+
+```powershell
+.\.venv\Scripts\python.exe -B experiments/recompute_selected_scores.py
+```
+
+Run-level scores, grouped denominators and verified evidence hashes are retained
+in `outputs/analysis/goal-attainment/`. Superseded exploratory score reports are removed.
 
 Translator uses its first forward contract; corrected drafts do not replace that
 initial sample. Mapping requires object, variable, direction, unit and time scale
@@ -108,17 +141,17 @@ independent source-executable subset of 300 runs:
 
 - F_rew_1: appropriate first-review handling / 600 scheduled runs.
 - F_rew_2: executable runs reaching reverse review / 300 source-executable runs.
-- F_rew_3: executable runs satisfying the unchanged task-success condition / the same 300 runs.
+- F_rew_3: executable runs satisfying the selected task-success condition / the same 300 runs.
 
 The first measure uses the recorded first forward Reviewer input and an
 independent structured reference. For an internal correctable error it requires
 a later clean forward draft; for a clean input it requires appropriate routing
 and reverse review; for a source-required clarification it requires the
-appropriate clarification route and original task success. Missing review gets
+appropriate clarification route and selected-protocol task success. Missing review gets
 no credit. These measures are workflow effects, not isolated diagnostic ability.
 F_rew_3 overlaps conceptually with overall TSR, and all three Reviewer indicators
 were chosen after acquisition. See `outputs/analysis/reviewer-feedback/COMPARISON.md`
-for the precise audit. The other indicators and quality/cost arithmetic are unchanged.
+for the precise audit. Translator, Actor and cost definitions remain unchanged; success-dependent Reviewer values follow the selected scoring protocol.
 
 ## Formal records
 

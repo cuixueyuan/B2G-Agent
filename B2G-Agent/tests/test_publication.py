@@ -38,6 +38,26 @@ def test_redaction_mapping_does_not_accept_unrecorded_changes(tmp_path):
     assert not recorded_hash_matches(path, original, repo_root=tmp_path)
 
 
+def test_goal_reader_checks_declared_publication_hashes(tmp_path, monkeypatch):
+    from b2g_agent import publication
+    from b2g_agent.evaluation.goal_attainment import _read_verified_json
+    monkeypatch.setattr(publication, "ROOT", tmp_path)
+    path = tmp_path / "outputs/evidence.json"
+    path.parent.mkdir()
+    path.write_text('{"portable":true}', encoding="utf-8")
+    original = hashlib.sha256(b"original private-path evidence").hexdigest()
+    published = hashlib.sha256(path.read_bytes()).hexdigest()
+    metadata = tmp_path / "publication"
+    metadata.mkdir()
+    (metadata / "redaction_map.json").write_text(json.dumps({"schema_version": "1.0", "artifacts": {
+        "outputs/evidence.json": {"original_sha256": original, "published_sha256": published}}}), encoding="utf-8")
+    assert _read_verified_json(str(path), original) == {"portable": True}
+    _read_verified_json.cache_clear()
+    path.write_text('{"portable":false}', encoding="utf-8")
+    with pytest.raises(ValueError, match="hash mismatch"):
+        _read_verified_json(str(path), original)
+
+
 def restore_module():
     spec = importlib.util.spec_from_file_location("restore_test", ROOT / "experiments/restore_release.py")
     module = importlib.util.module_from_spec(spec)

@@ -27,6 +27,7 @@ ACQUISITION_RELOCATIONS = {
 OLD_DERIVED_ROOT = OUTPUTS / "campaigns/retained-extension-20261102T181817Z/serial/full200"
 OLD_BASELINE_COMPARISON = OUTPUTS / "comparison/baseline-final-20261031"
 RELOCATIONS = {
+    "outputs/campaigns/retained-extension-20261102T181817Z/serial/effective/plain_translator": ABLATION_SUITES["plain_translator"] / "remaining150",
     **{f"outputs/benchmark/{old}": target for old, target in ACQUISITION_RELOCATIONS.items()},
     **{f"outputs/campaigns/retained-extension-20261102T181817Z/serial/full200/{method}": target
        for method, target in ABLATION_SUITES.items()},
@@ -65,7 +66,12 @@ def resolve_recorded_path(path: str | Path, *, repo_root: Path | None = None) ->
         if relative.casefold() == old.casefold() or relative.casefold().startswith(old.casefold() + "/"):
             destination = root / target.relative_to(ROOT)
             suffix = relative[len(old):].lstrip("/")
-            return destination / PurePosixPath(suffix)
+            resolved = destination / PurePosixPath(suffix)
+            if not resolved.exists() and "ablation-translator/attempt_history/" in resolved.as_posix():
+                migrated = Path(resolved.as_posix().replace("ablation-translator/attempt_history/", "ablation-translator/remaining150/"))
+                if migrated.exists():
+                    return migrated
+            return resolved
     if relative.startswith("outputs/"):
         return root / PurePosixPath(relative)
     if normalized.startswith((".local-data/", ".local-runs/")):
@@ -76,3 +82,17 @@ def resolve_recorded_path(path: str | Path, *, repo_root: Path | None = None) ->
             return root / name / PurePosixPath(normalized.split(marker, 1)[1])
     return original
 
+
+
+def current_score_path(run_root: Path, run_id: str) -> Path | None:
+    """Prefer the selected score sidecar over immutable acquisition-time scores."""
+    root = resolve_recorded_path(run_root).resolve()
+    try:
+        parts = root.relative_to(BENCHMARK.resolve()).parts
+    except ValueError:
+        return None
+    if parts and parts[0] in METHOD_DIRECTORIES.values():
+        candidate = BENCHMARK / parts[0] / "current_scores" / f"{run_id}.json"
+        if candidate.is_file():
+            return candidate
+    return None

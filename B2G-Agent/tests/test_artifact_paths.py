@@ -6,6 +6,8 @@ from b2g_agent.artifact_paths import resolve_recorded_path
 
 
 @pytest.mark.parametrize(("recorded", "expected"), [
+    ("outputs/campaigns/retained-extension-20261102T181817Z/serial/effective/plain_translator/w1/run/events.jsonl",
+     "outputs/benchmark/ablation-translator/remaining150/w1/run/events.jsonl"),
     ("outputs/benchmark/20261030T223320Z/w1/run/events.jsonl",
      "outputs/benchmark/proposed/w1/run/events.jsonl"),
     ("outputs/benchmark/a-v2/remaining150/w2/index.jsonl",

@@ -33,7 +33,7 @@ the historical schema without exposing it as another current metric definition.
 
 The selected Baseline's 600 run records are in `outputs/benchmark/baseline/`; its nine applicable final indicator values are in `FINAL_METRICS.csv` there and in the five-method comparison at `outputs/comparison/final/`. Three recorded infrastructure failures were recovered. Failed method outcomes remain in the denominator.
 
-Both completed cohorts use scoring protocol `interaction-quality-f085-v2`: F >= 0.85, A = 1, V = 1, G >= 0.9. The shared scoring revision was offline; model outputs and physical evidence were not reacquired. Current per-run scores remain in each suite's `current_scores/`. Agent metrics use programmatic references rather than independent human labels; repeated calls on 200 tasks are not 600 independent scenarios.
+Both completed cohorts use scoring protocol `validated-plan-goal-attainment-20261106`: F >= 0.85, A = 1, V = 1, G >= 0.9 where applicable. Source-required clarification has G=N/A and quality=100(F+A+V)/3; executable quality=25(F+A+V+G). G uses the 300 source-executable runs; other quality aggregates use all 600. The shared scoring revision was offline; model outputs and physical evidence were not reacquired. Current per-run scores remain in each suite's `current_scores/`. Agent metrics use programmatic references rather than independent human labels; repeated calls on 200 tasks are not 600 independent scenarios.
 
 The current execution still has known implementation limitations. The proposed
 Translator receives a deterministic contract draft while the baseline constructs

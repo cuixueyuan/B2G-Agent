@@ -36,6 +36,6 @@
     "retrieval_time"
   ],
   "episode_selection": "ascending_episode_id_all_200",
-  "agent_metrics_protocol_id": "selected-18-feedback-impact-20261103",
-  "scoring_protocol_id": "interaction-quality-f085-v2"
+  "agent_metrics_protocol_id": "selected-18-goal-attainment-20261106",
+  "scoring_protocol_id": "validated-plan-goal-attainment-20261106"
 }

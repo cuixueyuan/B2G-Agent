@@ -3,7 +3,7 @@ from copy import deepcopy
 import csv
 import json
 
-AGENT_METRICS_PROTOCOL = "selected-18-feedback-impact-20261103"
+AGENT_METRICS_PROTOCOL = "selected-18-goal-attainment-20261106"
 
 QUALITY = {
     "Q_qua": (r"Q^{\mathrm{qua}}", "interaction_quality"),
@@ -44,9 +44,9 @@ def paper_metrics(summary):
         values = cohort["all_attempt_metrics_zero_penalty"][field] if field else {}
         rows.append(dict(metric=name, symbol=symbol, layer="interaction_quality",
             value=values.get("mean") if field else cohort["Y"],
-            std=values.get("std"), denominator=cohort["attempts"],
+            std=values.get("std"), denominator=values.get("count", cohort["attempts"]) if name == "Q_G" else cohort["attempts"],
             unit="points / 100" if name == "Q_qua" else "ratio",
-            aggregation="mean over all attempts" if field else "successful / all attempts",
+            aggregation=("mean over source-executable attempts; clarification is N/A" if name == "Q_G" else "mean over all attempts" if field else "successful / all attempts"),
             direction="higher"))
     for name in agent_metric_keys(summary.get("method", "full_multi_agent")):
         symbol, field = AGENTS[name]

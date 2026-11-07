@@ -31,5 +31,6 @@
     "llm_inference_latency",
     "retrieval_time"
   ],
-  "agent_metrics_protocol_id": "selected-18-feedback-impact-20261103"
+  "agent_metrics_protocol_id": "selected-18-goal-attainment-20261106",
+  "scoring_protocol_id": "validated-plan-goal-attainment-20261106"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.1",
-  "scoring_protocol_id": "interaction-quality-f085-v2",
+  "schema_version": "2.0",
+  "scoring_protocol_id": "validated-plan-goal-attainment-20261106",
   "semantic_field_weights": {
     "sender_role": 1.0,
     "receiver_role": 1.0,
@@ -35,8 +35,11 @@
   },
   "numeric_absolute_tolerance": 1e-06,
   "numeric_relative_tolerance": 1e-06,
-  "goal_gap_epsilon": 1e-06,
   "semantic_success_threshold": 0.85,
   "goal_success_threshold": 0.9,
-  "objective_weight_rule": "normalized_inverse_priority"
+  "objective_weight_rule": "normalized_inverse_priority",
+  "goal_definition": "validated_plan_original_request_attainment",
+  "goal_reference": "original_source_target_not_numeric_oracle",
+  "goal_clarification": "not_applicable",
+  "quality_aggregation": "100_times_mean_of_applicable_components"
 }

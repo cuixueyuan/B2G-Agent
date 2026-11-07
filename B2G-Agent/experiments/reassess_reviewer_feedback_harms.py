@@ -1,7 +1,7 @@
 """Offline audit of consequences after a correctable first forward review error.
 
 The protocol uses recorded drafts, independent structured references and the
-unchanged task scores. It does not alter any acquisition or formal paper metric.
+selected task scores. It does not alter acquisition evidence.
 """
 from __future__ import annotations
 
@@ -48,18 +48,18 @@ def main() -> None:
     output = ROOT / "outputs/analysis/reviewer-feedback"
     output.mkdir(parents=True, exist_ok=True)
     protocol = {
-        "status": "exploratory_post_acquisition",
+        "status": "selected_post_acquisition_protocol",
         "source": "existing 200 tasks x 3 repeats for Proposed and Reviewer v4",
         "eligibility": "first forward Reviewer input independently has a correctable internal semantic or evidence error; source-required clarification and ordinary pending physics excluded",
         "comparison_cohort": "same 200 tasks x 3 repeats; first indicator includes all 600, second and third include the same 300 source-executable runs in both methods; paired-error intersection is diagnostic only",
         "indicators": {
-            "appropriate_handling": "all 600 runs: source clarification requires first Reviewer clarify_sender route and original task_success; clean first input requires actor route and subsequent reverse review; internal error requires final later forward draft independently clean; missing review gets no credit",
+            "appropriate_handling": "all 600 runs: source clarification requires first Reviewer clarify_sender route and selected-protocol task_success; clean first input requires actor route and subsequent reverse review; internal error requires final later forward draft independently clean; missing review gets no credit",
             "executable_reverse_review_reach": "among 300 source-executable runs, a reverse Reviewer stage appears; no corrective-return event is required by the formula",
-            "executable_task_success": "among the same 300 source-executable runs, unchanged original task_success is true",
+            "executable_task_success": "among the same 300 source-executable runs, selected-protocol task_success is true",
         },
         "diagnostics_only": ["correct_feedback_delivered", "feedback_based_closure"],
         "reference_policy": "reviewer-process-offline-v1.1 required-supported",
-        "score_policy": "original interaction-quality-f085-v2; no rescoring",
+        "score_policy": "validated-plan-goal-attainment-20261106",
         "analysis_script_sha256": digest(Path(__file__)),
         "api_calls": 0,
         "physics_runs": 0,

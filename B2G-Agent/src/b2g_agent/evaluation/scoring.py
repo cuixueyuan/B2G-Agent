@@ -8,18 +8,22 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from b2g_agent.contracts import Episode, EpisodeGroundTruth, PipelineResult, TaskFamily
+from b2g_agent.evaluation.goal_attainment import QUALITY_PROTOCOL, validated_goal
 from b2g_agent.contracts.outcomes import validated_non_execution_report, rejection_causes, constraint_failure_codes
 
 
 class InteractionScore(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: str = "1.0"
+    schema_version: str = "2.0"
+    scoring_protocol_id: str = QUALITY_PROTOCOL
+    scored_candidate: bool = True
+    goal_applicable: bool = True
     episode_id: str
     semantic_fidelity: float = Field(ge=0.0, le=1.0)
     actionability: float = Field(ge=0.0, le=1.0)
     physical_feasibility: float = Field(ge=0.0, le=1.0)
-    goal_achievement: float = Field(ge=0.0, le=1.0)
+    goal_achievement: float | None = Field(default=None, ge=0.0, le=1.0)
     interaction_quality: float = Field(ge=0.0, le=100.0)
     task_success: bool
     first_transfer: dict[str, Any]
@@ -62,12 +66,13 @@ class InteractionScorer:
         goal, goal_scores = self._goal_achievement(
             groundtruth, candidate, numeric_oracle
         )
-        quality = 25.0 * (fidelity + actionability + physical + goal)
+        components = [fidelity, actionability, physical] + ([] if goal is None else [goal])
+        quality = 100.0 * sum(components) / len(components)
         success = bool(
             fidelity >= float(self.config["semantic_success_threshold"])
             and math.isclose(actionability, 1.0, abs_tol=1e-12)
             and math.isclose(physical, 1.0, abs_tol=1e-12)
-            and goal >= float(self.config["goal_success_threshold"])
+            and (goal is None or goal >= float(self.config["goal_success_threshold"]))
         )
         evidence_consistency = self._evidence_consistency(
             groundtruth, candidate, numeric_oracle
@@ -119,7 +124,8 @@ class InteractionScorer:
             semantic_fidelity=_clip(fidelity),
             actionability=_clip(actionability),
             physical_feasibility=_clip(physical),
-            goal_achievement=_clip(goal),
+            goal_achievement=None if goal is None else _clip(goal),
+            goal_applicable=goal is not None,
             interaction_quality=max(0.0, min(100.0, quality)),
             task_success=success,
             first_transfer=first,
@@ -358,122 +364,11 @@ class InteractionScorer:
             )
         return 1.0
 
-    def _goal_achievement(
-        self,
-        truth: EpisodeGroundTruth,
-        candidate: PipelineResult,
-        numeric: dict[str, Any] | None,
-    ) -> tuple[float, dict[str, float]]:
+    def _goal_achievement(self, truth, candidate, numeric):
+        # Numeric reference outcomes are not the denominator of original-goal attainment.
         if truth.perfect_execution.route == "clarify_sender":
-            value = float(candidate.information_exchange.decision == "needs_clarification")
-            return value, {"clarification": value}
-        if numeric is None or candidate.physics_evidence is None:
-            return 0.0, {family.value: 0.0 for family in truth.task_specification.task_families}
-        oracle = numeric["business_metrics"]
-        observed = candidate.physics_evidence.business_metrics
-        target_field = truth.task_specification.fields.get("target_power")
-        target = (
-            float(target_field.value)
-            if target_field is not None and isinstance(target_field.value, (int, float))
-            else 0.0
-        )
-        scores: dict[str, float] = {}
-        for family in truth.task_specification.task_families:
-            score = self._family_goal_score(family, target, oracle, observed)
-            scores[family.value] = score
-        priorities = {
-            objective.name: objective.priority
-            for objective in truth.task_specification.objectives
-        }
-        raw_weights = {
-            name: 1.0 / max(1, priorities.get(name, 1)) for name in scores
-        }
-        total = sum(raw_weights.values()) or 1.0
-        aggregate = sum(scores[name] * raw_weights[name] / total for name in scores)
-        return aggregate, scores
-
-    def _family_goal_score(
-        self,
-        family: TaskFamily,
-        target: float,
-        oracle: dict[str, Any],
-        observed: dict[str, Any],
-    ) -> float:
-        if family == TaskFamily.PEAK_SHAVING:
-            return self._gap_score(
-                max(0.0, target),
-                max(0.0, target - float(oracle.get("feeder_peak_reduction_kw") or 0.0)),
-                max(0.0, target - float(observed.get("feeder_peak_reduction_kw") or 0.0)),
-            )
-        if family == TaskFamily.CONGESTION_MANAGEMENT:
-            return self._gap_score_from_metrics(
-                oracle,
-                observed,
-                "baseline_congestion_violation_area_pct_h",
-                "congestion_violation_area_pct_h",
-            )
-        if family == TaskFamily.VOLTAGE_MANAGEMENT:
-            return self._gap_score_from_metrics(
-                oracle,
-                observed,
-                "baseline_voltage_violation_area_pu_h",
-                "voltage_violation_area_pu_h",
-            )
-        if family in {TaskFamily.RESERVE_SERVICE, TaskFamily.MARKET_TRADING}:
-            return self._gap_score(
-                1.0,
-                1.0 - float(oracle.get("delivery_ratio") or 0.0),
-                1.0 - float(observed.get("delivery_ratio") or 0.0),
-            )
-        if family == TaskFamily.RENEWABLE_ABSORPTION:
-            return self._gap_score_from_metrics(
-                oracle,
-                observed,
-                "counterfactual_pv_curtailment_kwh",
-                "pv_curtailment_kwh",
-            )
-        if family == TaskFamily.BASELINE_FLEXIBILITY:
-            keys = (
-                "counterfactual_baseline_kw",
-                "flexibility_lower_kw",
-                "flexibility_upper_kw",
-            )
-            errors = []
-            for key in keys:
-                expected = oracle.get(key)
-                actual = observed.get(key)
-                if expected is None or actual is None:
-                    return 0.0
-                scale = max(abs(float(expected)), 1.0)
-                errors.append(abs(float(actual) - float(expected)) / scale)
-            return _clip(1.0 - sum(errors) / len(errors))
-        return 0.0
-
-    def _gap_score_from_metrics(
-        self,
-        oracle: dict[str, Any],
-        observed: dict[str, Any],
-        baseline_key: str,
-        response_key: str,
-    ) -> float:
-        if (
-            oracle.get(baseline_key) is None
-            or oracle.get(response_key) is None
-            or observed.get(response_key) is None
-        ):
-            return 0.0
-        return self._gap_score(
-            float(oracle[baseline_key]),
-            float(oracle[response_key]),
-            float(observed[response_key]),
-        )
-
-    def _gap_score(self, baseline: float, oracle: float, observed: float) -> float:
-        improvement = baseline - oracle
-        epsilon = float(self.config["goal_gap_epsilon"])
-        if improvement <= epsilon:
-            return float(self._equivalent(oracle, observed))
-        return _clip((baseline - observed) / improvement)
+            return None, {}
+        return validated_goal(truth.task_specification, candidate.physics_evidence)
 
     def _evidence_consistency(
         self,

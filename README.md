@@ -61,6 +61,8 @@ The small [reported matrix](B2G-Agent/results/reported_metrics.csv) is also incl
 
 Each ablation changes only its named agent implementation; resulting trajectories can still differ. The final vocabulary has 18 indicators: six quality, nine agent-performance, and three whole-system cost measures. Proposed has 18 applicable values, baseline nine, and each ablation 12. Non-target metrics are absent, not zero. Reviewer measures appropriate first handling, executable-task reverse-review reach, and executable-task success. These post-acquisition measures describe workflow effects rather than isolated diagnosis. See [evaluation protocol](B2G-Agent/docs/evaluation-protocol.md) and [ablation definitions](B2G-Agent/docs/ablation-evaluation.md).
 
+The selected quality protocol is **validated-plan original-goal attainment**. G uses the original requested amount and validated 15-minute physical evidence, rather than an optimized reference target. It describes the simulated plan; delivery remains checked by A. The 100 source-executable tasks contribute 300 runs to G. The 100 source-required clarification tasks have G=N/A and quality=100(F+A+V)/3; executable quality=25(F+A+V+G). Quality and success use all 600 attempts. Success requires F>=0.85, A=V=1 and G>=0.90 where applicable. This metric revision was selected after acquisition and calculated without new API calls or physics runs. Reviewer executable-task success uses the same updated success rule.
+
 ### Reproduction
 
 **Verify the reported experiment without new API calls.** Restore all packages in a separate checkout:
@@ -69,10 +71,10 @@ Each ablation changes only its named agent implementation; resulting trajectorie
 .\.venv\Scripts\python.exe -B experiments\restore_release.py --archive-dir "<download-directory>" --include all
 .\.venv\Scripts\python.exe -B experiments\verify_retained_layout.py
 .\.venv\Scripts\python.exe -B experiments\reassess_reviewer_feedback_harms.py
-.\.venv\Scripts\python.exe -B experiments\finalize_selected_reports.py
+.\.venv\Scripts\python.exe -B experiments\recompute_selected_scores.py
 ```
 
-The verifier checks the five cohorts, journals, captured archives, and evidence using publication hash mappings. The Reviewer command recomputes its audit from recorded interactions. The finalizer validates that audit and republishes the approved matrix; it does not independently recompute every quality/cost value. Read `outputs/comparison/final/metrics.csv` and each method's `FINAL_METRICS.*`. The complete execution process, including intermediate failures and corrections, is available in Google Drive.
+The verifier checks the five cohorts, journals, captured archives, and evidence using publication hash mappings. The Reviewer command recomputes its audit from recorded interactions. The offline scorer rederives G from retained physical evidence and recalculates quality, success and the dependent Reviewer metrics, while retaining audited F/A/V, Translator/Actor and cost values. It checks the selected 3,000 run slots before replacing derived reports. Read `outputs/comparison/final/metrics.csv` and each method's `FINAL_METRICS.*`. The complete execution process, including intermediate failures and corrections, is available in Google Drive. Restore the newly dated release into a clean checkout; do not mix archives from different release manifests.
 
 **Run the experiment again.** Use a clean checkout with only input data restored and configure your API key and EnergyPlus path:
 
@@ -91,7 +93,7 @@ Fresh results may differ because of API/model availability, service-side updates
 
 ### Results
 
-These figures summarize the final five-method benchmark, with 200 tasks repeated three times per method. The agent panels compare Proposed with the corresponding ablation. Metric definitions and denominators are given in the [evaluation protocol](B2G-Agent/docs/evaluation-protocol.md); exact values are available in the [reported matrix](B2G-Agent/results/reported_metrics.csv). Click a preview to open the original PDF.
+These figures summarize the final five-method benchmark, with 200 tasks repeated three times per method. The agent panels compare Proposed with the corresponding ablation. Metric definitions and denominators are given in the [evaluation protocol](B2G-Agent/docs/evaluation-protocol.md); exact values are available in the [reported matrix](B2G-Agent/results/reported_metrics.csv). Click a preview to open the PDF. The G denominator is 300 source-executable runs; the other quality aggregates use 600 runs. To regenerate all three figures from the small shipped matrix, install NumPy and matplotlib and run `python B2G-Agent/results/plot_case_study.py` from the repository root.
 
 #### Quality components
 

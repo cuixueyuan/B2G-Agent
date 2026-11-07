@@ -256,6 +256,25 @@ def load_report_module():
     return module
 
 
+def test_goal_aggregation_excludes_clarification_but_keeps_failed_executable_runs():
+    report = load_report_module()
+    complete = {name: 1.0 for name in report.METRICS}
+    complete.update(interaction_quality=100.0, task_success=True, goal_applicable=True)
+    clarification = dict(complete, goal_achievement=None, goal_applicable=False)
+    rows = [
+        {"row": {"status": "completed"}, "score": complete, "goal_applicable": True},
+        {"row": {"status": "completed"}, "score": clarification, "goal_applicable": False},
+        {"row": {"status": "failed"}, "score": None, "goal_applicable": True},
+        {"row": {"status": "failed"}, "score": None, "goal_applicable": False},
+    ]
+    result = report.cohort(rows)
+    goals = result["all_attempt_metrics_zero_penalty"]["goal_achievement"]
+    assert goals["count"] == 2 and goals["mean"] == 0.5
+    quality = result["all_attempt_metrics_zero_penalty"]["interaction_quality"]
+    assert quality["count"] == 4 and quality["mean"] == 50.0
+    assert result["Y"] == 0.5
+
+
 def test_same_attempt_metrics_cost_and_report(tmp_path):
     pipeline, pending, _ = setup_pipeline(tmp_path)
     journal_path = Path(pending.interaction_journal)

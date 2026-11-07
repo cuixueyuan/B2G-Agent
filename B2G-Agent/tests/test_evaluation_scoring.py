@@ -1,4 +1,5 @@
 import json
+import hashlib
 from pathlib import Path
 
 from b2g_agent.agents import ActorAgent, ReviewerAgent
@@ -31,7 +32,7 @@ def _scorer() -> InteractionScorer:
     return InteractionScorer(CASE_DIR / "evaluation" / "scoring.json")
 
 
-def test_perfect_physics_result_scores_one_hundred() -> None:
+def test_perfect_physics_result_scores_one_hundred(tmp_path) -> None:
     case = CaseBundle.default(REPO_ROOT)
     episode = case.get_episode("ep-001")
     truth = _truth(episode.episode_id)
@@ -55,11 +56,25 @@ def test_perfect_physics_result_scores_one_hundred() -> None:
         ),
     )
     reviewer = ReviewerAgent().review(specification, plan, simulation_status="completed")
+    def write_artifact(name, payload):
+        path = tmp_path / name
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return {"path": name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    spec_ref = write_artifact("task.json", specification.model_dump(mode="json"))
+    active = numeric["business_metrics"]["active_interval_indices"]
+    validation_ref = write_artifact("validation.json", {
+        "actual_aggregate_service_kw": [60.0 if i in active else 0.0 for i in range(96)],
+        "business_metrics": numeric["business_metrics"],
+    })
+    package_ref = write_artifact("evidence.json", {
+        "task_specification": spec_ref,
+        "iterations": [{"coupled_validation": validation_ref}],
+    })
     evidence = PhysicsEvidence(
         workflow="closed_loop",
         status="validated_full",
-        evidence_path="test/evidence_package.json",
-        evidence_sha256="a" * 64,
+        evidence_path=str(tmp_path / "evidence.json"),
+        evidence_sha256=package_ref["sha256"],
         receiver_decision=final["receiver_decision"],
         committed_power_kw=final["requested_power_kw"],
         completion_percentage=final["completion_percentage"],
@@ -98,6 +113,7 @@ def test_perfect_physics_result_scores_one_hundred() -> None:
     assert not blocked.actionability_checks["final_delivery"]
     assert blocked.actionability < 1 and not blocked.task_success
     assert blocked.physical_feasibility == score.physical_feasibility
+    assert blocked.goal_achievement == score.goal_achievement
 
 
 def test_correct_clarification_scores_one_hundred_without_physics() -> None:
@@ -129,6 +145,7 @@ def test_correct_clarification_scores_one_hundred_without_physics() -> None:
 
     assert score.interaction_quality == 100.0
     assert score.task_success is True
+    assert score.goal_achievement is None and not score.goal_applicable
     assert score.agent_metrics["actor_tool_chain_success"] is True
 
     blocked = _scorer().score(episode=episode, groundtruth=truth,
@@ -185,7 +202,8 @@ def test_adopted_fidelity_threshold_retains_full_delivery_requirement() -> None:
     assert scorer.config["semantic_success_threshold"] == 0.85
     current = scorer.score(episode=episode, groundtruth=truth, candidate=candidate, numeric_oracle=None)
     assert 0.85 <= current.semantic_fidelity < 0.9
-    assert current.actionability == current.physical_feasibility == current.goal_achievement == 1
+    assert current.actionability == current.physical_feasibility == 1
+    assert current.goal_achievement is None and not current.goal_applicable
     assert current.task_success
     blocked = scorer.score(episode=episode, groundtruth=truth,
         candidate=candidate.model_copy(update={"workflow_status": "blocked"}), numeric_oracle=None)

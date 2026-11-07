@@ -1,0 +1,230 @@
+{
+  "generated_at": "2026-11-07T03:48:38.362002+00:00",
+  "methods": [
+    "proposed",
+    "baseline",
+    "translator_v2",
+    "actor_v2",
+    "reviewer_v4"
+  ],
+  "tasks_per_method": 200,
+  "repeats_per_task": 3,
+  "expected_attempts_per_method": 600,
+  "quality_protocol": "validated-plan-goal-attainment-20261106",
+  "reviewer_metric_protocol": "reviewer-feedback-impacts-full200-20261103",
+  "api_calls": 0,
+  "physics_reruns": 0,
+  "source_sha256": {
+    "outputs\\benchmark\\proposed\\FINAL_METRICS.json": "40a3f97c4b2a9ce8107f5281c309b523c9be63c9be1f5623752932c620d9ec15",
+    "outputs\\benchmark\\baseline\\FINAL_METRICS.json": "6d24b30fabc7de0a0383d5d629ddc3bdb27b6304d032d35a81c64339dc5e2813",
+    "outputs\\benchmark\\ablation-translator\\FINAL_METRICS.json": "2fd1ba28bbe78ac67c7386761101fcc05162c4d756f9e6ee1ddc491f5a102768",
+    "outputs\\benchmark\\ablation-actor\\FINAL_METRICS.json": "e0219403fdab7f4b81e6853b55e0b1de48ee42db3c490c3e80d57b9d57aee688",
+    "outputs\\benchmark\\ablation-reviewer\\FINAL_METRICS.json": "a6589c46706f66283e623dde19d51d3dc82e741cb0c5fe0266327bdfb8dedd8c",
+    "outputs\\analysis\\reviewer-feedback\\comparison.json": "0a89963ea8996b59afba10f3f672a56eaa518b6d7f3468c682fd741bb15c04f8"
+  },
+  "reviewer_numerators": {
+    "proposed": {
+      "F_rew_1": 518,
+      "F_rew_2": 271,
+      "F_rew_3": 159
+    },
+    "reviewer_v4": {
+      "F_rew_1": 422,
+      "F_rew_2": 174,
+      "F_rew_3": 100
+    }
+  },
+  "reviewer_denominators": {
+    "F_rew_1": 600,
+    "F_rew_2": 300,
+    "F_rew_3": 300
+  },
+  "notes": [
+    "Post-acquisition metric revision; no new API or physics runs.",
+    "G describes the validated simulated plan, not external service delivery.",
+    "Source-required clarification has G=N/A; quality averages F/A/V.",
+    "Non-target agent indicators are unreported, not zero.",
+    "Immutable acquisition artifacts may contain historical score fields; only current_scores and final reports are current."
+  ],
+  "relocated_method_suites": {
+    "proposed": "outputs/benchmark/proposed",
+    "baseline": "outputs/benchmark/baseline",
+    "translator_v2": "outputs/benchmark/ablation-translator",
+    "actor_v2": "outputs/benchmark/ablation-actor",
+    "reviewer_v4": "outputs/benchmark/ablation-reviewer"
+  },
+  "original_acquisition_paths_recorded_in_immutable_manifests": true,
+  "historical_derived_report_sha256_before_cleanup": {
+    "outputs\\comparison\\baseline-final-20261031\\metrics_9.csv": "12d2e465b3d17ca5235b97c7404d04b57a99b67b5a2b760085802861764ba37d",
+    "outputs\\benchmark\\20261030T223320Z\\paper_metrics.json": "d041fa57459504510915638419a67accc145797f9e28dbd2bcf989ff2d1c23ee",
+    "outputs\\benchmark\\20261031T075835Z-baseline\\paper_metrics.json": "5826b74b2afc58832cd5ae23c6734f1eea056ad11743e8158ce238ce14be8c7f",
+    "outputs\\campaigns\\retained-extension-20261102T181817Z\\serial\\full200\\plain_translator\\paper_metrics.json": "77205cdfe54fac78ccdbcc5fefe08287efaf77ca1d91bf7ebb6f41902fd70f8f",
+    "outputs\\campaigns\\retained-extension-20261102T181817Z\\serial\\full200\\unstructured_actor\\paper_metrics.json": "3c51a19a66d53f46e13353e96174f3dc0cb92f11ad691ec1c56e6ceb08e53d75",
+    "outputs\\campaigns\\retained-extension-20261102T181817Z\\serial\\full200\\reviewer_no_feedback\\paper_metrics.json": "a791de7ec4663359f806976d1e14815bb7ff4f05650d6b0a93db1bd8442279b9"
+  },
+  "historical_derived_reports_removed_after_final_selection": true,
+  "quality_cohorts": {
+    "proposed": {
+      "all": {
+        "attempts": 600,
+        "F": 0.8891895805218174,
+        "A": 0.892962962962963,
+        "V": 0.8783333333333333,
+        "G": 0.6748866839525849,
+        "quality": 85.57014405010706,
+        "success": 0.69,
+        "success_count": 414
+      },
+      "executable": {
+        "attempts": 300,
+        "F": 0.9357865684510421,
+        "A": 0.9359259259259259,
+        "V": 0.9,
+        "G": 0.6748866839525849,
+        "quality": 86.16497945823882,
+        "success": 0.53,
+        "success_count": 159
+      },
+      "clarification": {
+        "attempts": 300,
+        "F": 0.8425925925925926,
+        "A": 0.85,
+        "V": 0.8566666666666667,
+        "G": null,
+        "quality": 84.97530864197532,
+        "success": 0.85,
+        "success_count": 255
+      }
+    },
+    "baseline": {
+      "all": {
+        "attempts": 600,
+        "F": 0.719163851319769,
+        "A": 0.707037037037037,
+        "V": 0.6516666666666666,
+        "G": 0.5106508565454229,
+        "quality": 66.70533848801558,
+        "success": 0.38,
+        "success_count": 228
+      },
+      "executable": {
+        "attempts": 300,
+        "F": 0.7148710319595701,
+        "A": 0.7707407407407407,
+        "V": 0.66,
+        "G": 0.5106508565454229,
+        "quality": 66.40656573114335,
+        "success": 0.14,
+        "success_count": 42
+      },
+      "clarification": {
+        "attempts": 300,
+        "F": 0.7234566706799679,
+        "A": 0.6433333333333333,
+        "V": 0.6433333333333333,
+        "G": null,
+        "quality": 67.00411124488782,
+        "success": 0.62,
+        "success_count": 186
+      }
+    },
+    "translator_v2": {
+      "all": {
+        "attempts": 600,
+        "F": 0.7444306671310895,
+        "A": 0.715,
+        "V": 0.7516666666666667,
+        "G": 0.654501786365407,
+        "quality": 71.81127599693475,
+        "success": 0.35333333333333333,
+        "success_count": 212
+      },
+      "executable": {
+        "attempts": 300,
+        "F": 0.7642444568805956,
+        "A": 0.7899999999999999,
+        "V": 0.8633333333333333,
+        "G": 0.654501786365407,
+        "quality": 76.8019894144834,
+        "success": 0.13,
+        "success_count": 39
+      },
+      "clarification": {
+        "attempts": 300,
+        "F": 0.7246168773815833,
+        "A": 0.64,
+        "V": 0.64,
+        "G": null,
+        "quality": 66.82056257938612,
+        "success": 0.5766666666666667,
+        "success_count": 173
+      }
+    },
+    "actor_v2": {
+      "all": {
+        "attempts": 600,
+        "F": 0.6930280931085885,
+        "A": 0.7211111111111111,
+        "V": 0.4866666666666667,
+        "G": 0.06942092276833595,
+        "quality": 58.942154761680605,
+        "success": 0.45166666666666666,
+        "success_count": 271
+      },
+      "executable": {
+        "attempts": 300,
+        "F": 0.543037037037037,
+        "A": 0.5988888888888889,
+        "V": 0.12666666666666668,
+        "G": 0.06942092276833595,
+        "quality": 33.45033788402321,
+        "success": 0.06,
+        "success_count": 18
+      },
+      "clarification": {
+        "attempts": 300,
+        "F": 0.8430191491801399,
+        "A": 0.8433333333333334,
+        "V": 0.8466666666666667,
+        "G": null,
+        "quality": 84.433971639338,
+        "success": 0.8433333333333334,
+        "success_count": 253
+      }
+    },
+    "reviewer_v4": {
+      "all": {
+        "attempts": 600,
+        "F": 0.8417377043034938,
+        "A": 0.8137037037037037,
+        "V": 0.7333333333333333,
+        "G": 0.4071694337443664,
+        "quality": 75.74244568208849,
+        "success": 0.58,
+        "success_count": 348
+      },
+      "executable": {
+        "attempts": 300,
+        "F": 0.776111860848703,
+        "A": 0.8007407407407408,
+        "V": 0.5766666666666667,
+        "G": 0.4071694337443664,
+        "quality": 64.01721755001192,
+        "success": 0.3333333333333333,
+        "success_count": 100
+      },
+      "clarification": {
+        "attempts": 300,
+        "F": 0.9073635477582846,
+        "A": 0.8266666666666667,
+        "V": 0.89,
+        "G": null,
+        "quality": 87.46767381416504,
+        "success": 0.8266666666666667,
+        "success_count": 248
+      }
+    }
+  },
+  "goal_denominator_per_method": 300,
+  "quality_and_success_denominator_per_method": 600
+}

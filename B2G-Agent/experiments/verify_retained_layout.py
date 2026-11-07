@@ -53,7 +53,7 @@ def verify():
         with zipfile.ZipFile(directory / "frozen_source_and_case.zip") as archive:
             assert set(archive.namelist()) == set(frozen)
             assert all(recorded_hash_matches(directory / "frozen_source_and_case.zip", frozen[filename], data=archive.read(filename), member=filename) for filename in frozen)
-        record_root = directory / "interaction_records" if name == "proposed" else directory / "acquisition_history/interactions"
+        record_root = directory / "interaction_records"
         checked = 0
         for record_path in record_root.glob("*/record.json"):
             record = json.loads(record_path.read_text(encoding="utf-8"))

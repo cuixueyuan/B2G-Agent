@@ -43,3 +43,9 @@ present that replay as guaranteed numerical or bitwise reproduction.
 records, interaction journals, per-turn simulations, and learned failure memory.
 Readers obtain a fresh workspace automatically. The public template contains only
 an offline configuration example and ignore rules; no author session is needed.
+
+## Goal-attainment revision
+
+The current release adopts validated-plan original-goal attainment after acquisition. Only derived scores, reports, dependent Reviewer success values and figures were recalculated; no API calls, physics reruns, task edits or agent-route changes were made. G uses 300 source-executable runs per method; clarification G is N/A. Updated archives must be restored together into a clean checkout.
+
+`experiments/recompute_selected_scores.py` derives G from retained physical evidence and updates quality, success and dependent Reviewer metrics. Published artifacts are checked against exact bytes or the explicit original/published hash mapping. Raw captured historical scores remain provenance only. The source inventory and publication manifests describe the current release; earlier validation evidence is labeled by its scope.
